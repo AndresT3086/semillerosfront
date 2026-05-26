@@ -34,7 +34,7 @@ const EMPTY: GeneralForm = {
 
 type Errors = Partial<Record<keyof GeneralForm, string>>;
 
-function req(label: string) {
+function req(_label: string) {
   return <> <span style={{ color: '#e53e3e' }}>*</span></>;
 }
 function FieldErr({ msg }: { msg?: string }) {
