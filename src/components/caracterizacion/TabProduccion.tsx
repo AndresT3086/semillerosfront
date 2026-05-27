@@ -1,20 +1,17 @@
-import { useState } from 'react';
+import type { ProduccionFormData } from '../../types';
 
 interface Props {
+  value: ProduccionFormData;
+  onChange: (value: ProduccionFormData) => void;
   onSave: () => void;
   onPrev: () => void;
   saving: boolean;
 }
 
-export default function TabProduccion({ onSave, onPrev, saving }: Props) {
-  const [tieneArticulos, setTieneArticulos] = useState('');
-  const [cantArticulos, setCantArticulos] = useState('');
-  const [tieneLibros, setTieneLibros] = useState('');
-  const [cantLibros, setCantLibros] = useState('');
-  const [organizaEventos, setOrganizaEventos] = useState('');
-  const [cantEventos, setCantEventos] = useState('');
-  const [participaEventos, setParticipaEventos] = useState('');
-  const [cantParticipaciones, setCantParticipaciones] = useState('');
+export default function TabProduccion({ value, onChange, onSave, onPrev, saving }: Props) {
+  const set = (field: keyof ProduccionFormData, fieldValue: string) => {
+    onChange({ ...value, [field]: fieldValue });
+  };
 
   const radioGroup = (
     name: string,
@@ -42,46 +39,46 @@ export default function TabProduccion({ onSave, onPrev, saving }: Props) {
         <div className="col-md-6">
           <label className="form-label small fw-semibold" style={{ color: 'var(--udea-verde-oscuro)' }}>¿Tienen artículos científicos?</label>
           <div className="p-2 rounded" style={{ background: 'var(--udea-gris-claro)' }}>
-            {radioGroup('articulos', tieneArticulos, setTieneArticulos)}
+            {radioGroup('articulos', value.tieneArticulos, v => set('tieneArticulos', v))}
           </div>
         </div>
         <div className="col-md-6">
           <label className="form-label small fw-semibold" style={{ color: 'var(--udea-verde-oscuro)' }}>Cantidad de artículos</label>
           <input type="number" className="form-control form-control-sm" min={0} placeholder="0"
-            value={cantArticulos} onChange={e => setCantArticulos(e.target.value)} disabled={tieneArticulos !== 'si'} />
+            value={value.cantArticulos} onChange={e => set('cantArticulos', e.target.value)} disabled={value.tieneArticulos !== 'si'} />
         </div>
         <div className="col-md-6">
           <label className="form-label small fw-semibold" style={{ color: 'var(--udea-verde-oscuro)' }}>¿Tienen libros o capítulos?</label>
           <div className="p-2 rounded" style={{ background: 'var(--udea-gris-claro)' }}>
-            {radioGroup('libros', tieneLibros, setTieneLibros)}
+            {radioGroup('libros', value.tieneLibros, v => set('tieneLibros', v))}
           </div>
         </div>
         <div className="col-md-6">
           <label className="form-label small fw-semibold" style={{ color: 'var(--udea-verde-oscuro)' }}>Cantidad de libros/capítulos</label>
           <input type="number" className="form-control form-control-sm" min={0} placeholder="0"
-            value={cantLibros} onChange={e => setCantLibros(e.target.value)} disabled={tieneLibros !== 'si'} />
+            value={value.cantLibros} onChange={e => set('cantLibros', e.target.value)} disabled={value.tieneLibros !== 'si'} />
         </div>
         <div className="col-md-6">
           <label className="form-label small fw-semibold" style={{ color: 'var(--udea-verde-oscuro)' }}>¿Organizan eventos?</label>
           <div className="p-2 rounded" style={{ background: 'var(--udea-gris-claro)' }}>
-            {radioGroup('orgEventos', organizaEventos, setOrganizaEventos)}
+            {radioGroup('orgEventos', value.organizaEventos, v => set('organizaEventos', v))}
           </div>
         </div>
         <div className="col-md-6">
           <label className="form-label small fw-semibold" style={{ color: 'var(--udea-verde-oscuro)' }}>Cantidad de eventos organizados</label>
           <input type="number" className="form-control form-control-sm" min={0} placeholder="0"
-            value={cantEventos} onChange={e => setCantEventos(e.target.value)} disabled={organizaEventos !== 'si'} />
+            value={value.cantEventos} onChange={e => set('cantEventos', e.target.value)} disabled={value.organizaEventos !== 'si'} />
         </div>
         <div className="col-md-6">
           <label className="form-label small fw-semibold" style={{ color: 'var(--udea-verde-oscuro)' }}>¿Participan en eventos?</label>
           <div className="p-2 rounded" style={{ background: 'var(--udea-gris-claro)' }}>
-            {radioGroup('partEventos', participaEventos, setParticipaEventos)}
+            {radioGroup('partEventos', value.participaEventos, v => set('participaEventos', v))}
           </div>
         </div>
         <div className="col-md-6">
           <label className="form-label small fw-semibold" style={{ color: 'var(--udea-verde-oscuro)' }}>Cantidad de participaciones</label>
           <input type="number" className="form-control form-control-sm" min={0} placeholder="0"
-            value={cantParticipaciones} onChange={e => setCantParticipaciones(e.target.value)} disabled={participaEventos !== 'si'} />
+            value={value.cantParticipaciones} onChange={e => set('cantParticipaciones', e.target.value)} disabled={value.participaEventos !== 'si'} />
         </div>
       </div>
 

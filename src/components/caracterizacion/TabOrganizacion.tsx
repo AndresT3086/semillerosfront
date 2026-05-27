@@ -1,6 +1,8 @@
-import { useState } from 'react';
+import type { OrganizacionFormData } from '../../types';
 
 interface Props {
+  value: OrganizacionFormData;
+  onChange: (value: OrganizacionFormData) => void;
   onSave: () => void;
   onPrev: () => void;
   saving: boolean;
@@ -13,16 +15,13 @@ const FUENTES = ['Recursos propios de la universidad', 'Convocatoria interna Ude
   'Gobernación de Antioquia', 'Alcaldía', 'Empresa privada', 'Cooperación internacional', 'ONG',
   'Sin financiación', 'Otra'];
 
-export default function TabOrganizacion({ onSave, onPrev, saving }: Props) {
-  const [tieneMision, setTieneMision] = useState('');
-  const [mision, setMision] = useState('');
-  const [tieneVision, setTieneVision] = useState('');
-  const [vision, setVision] = useState('');
-  const [recursos, setRecursos] = useState<string[]>([]);
-  const [fuentes, setFuentes] = useState<string[]>([]);
+export default function TabOrganizacion({ value, onChange, onSave, onPrev, saving }: Props) {
+  const set = (field: keyof OrganizacionFormData, fieldValue: string | string[]) => {
+    onChange({ ...value, [field]: fieldValue });
+  };
 
-  function toggleCheck(list: string[], item: string, setter: (v: string[]) => void) {
-    setter(list.includes(item) ? list.filter(x => x !== item) : [...list, item]);
+  function toggleCheck(list: string[], item: string, field: 'recursos' | 'fuentes') {
+    set(field, list.includes(item) ? list.filter(x => x !== item) : [...list, item]);
   }
 
   const radio = (name: string, value: string, onChange: (v: string) => void) => (
@@ -46,21 +45,21 @@ export default function TabOrganizacion({ onSave, onPrev, saving }: Props) {
       <div className="row g-3 mb-3">
         <div className="col-md-6">
           <label className="form-label small fw-semibold" style={{ color: 'var(--udea-verde-oscuro)' }}>¿Tiene Misión?</label>
-          <div className="p-2 rounded" style={{ background: 'var(--udea-gris-claro)' }}>{radio('mision', tieneMision, setTieneMision)}</div>
+          <div className="p-2 rounded" style={{ background: 'var(--udea-gris-claro)' }}>{radio('mision', value.tieneMision, v => set('tieneMision', v))}</div>
         </div>
         <div className="col-md-6">
           <label className="form-label small fw-semibold" style={{ color: 'var(--udea-verde-oscuro)' }}>¿Tiene Visión?</label>
-          <div className="p-2 rounded" style={{ background: 'var(--udea-gris-claro)' }}>{radio('vision', tieneVision, setTieneVision)}</div>
+          <div className="p-2 rounded" style={{ background: 'var(--udea-gris-claro)' }}>{radio('vision', value.tieneVision, v => set('tieneVision', v))}</div>
         </div>
         <div className="col-md-6">
           <label className="form-label small fw-semibold" style={{ color: 'var(--udea-verde-oscuro)' }}>Misión</label>
           <textarea className="form-control form-control-sm" rows={3} placeholder="Escriba la misión..."
-            value={mision} onChange={e => setMision(e.target.value)} disabled={tieneMision !== 'si'} />
+            value={value.mision} onChange={e => set('mision', e.target.value)} disabled={value.tieneMision !== 'si'} />
         </div>
         <div className="col-md-6">
           <label className="form-label small fw-semibold" style={{ color: 'var(--udea-verde-oscuro)' }}>Visión</label>
           <textarea className="form-control form-control-sm" rows={3} placeholder="Escriba la visión..."
-            value={vision} onChange={e => setVision(e.target.value)} disabled={tieneVision !== 'si'} />
+            value={value.vision} onChange={e => set('vision', e.target.value)} disabled={value.tieneVision !== 'si'} />
         </div>
       </div>
 
@@ -69,7 +68,7 @@ export default function TabOrganizacion({ onSave, onPrev, saving }: Props) {
         <div className="p-2 rounded" style={{ background: 'var(--udea-gris-claro)', display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '4px 16px' }}>
           {RECURSOS.map(r => (
             <label key={r} className="d-flex align-items-center gap-2 small" style={{ cursor: 'pointer' }}>
-              <input type="checkbox" checked={recursos.includes(r)} onChange={() => toggleCheck(recursos, r, setRecursos)}
+              <input type="checkbox" checked={value.recursos.includes(r)} onChange={() => toggleCheck(value.recursos, r, 'recursos')}
                 style={{ accentColor: 'var(--udea-verde-principal)' }} />
               {r}
             </label>
@@ -82,7 +81,7 @@ export default function TabOrganizacion({ onSave, onPrev, saving }: Props) {
         <div className="p-2 rounded" style={{ background: 'var(--udea-gris-claro)', display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '4px 16px' }}>
           {FUENTES.map(f => (
             <label key={f} className="d-flex align-items-center gap-2 small" style={{ cursor: 'pointer' }}>
-              <input type="checkbox" checked={fuentes.includes(f)} onChange={() => toggleCheck(fuentes, f, setFuentes)}
+              <input type="checkbox" checked={value.fuentes.includes(f)} onChange={() => toggleCheck(value.fuentes, f, 'fuentes')}
                 style={{ accentColor: 'var(--udea-verde-principal)' }} />
               {f}
             </label>

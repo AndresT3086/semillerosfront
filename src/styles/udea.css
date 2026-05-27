@@ -128,6 +128,55 @@ body {
   font-size: 1.1rem;
 }
 
+/* PANEL COORDINADOR */
+.role-option {
+  border: 2px solid var(--udea-gris);
+  border-radius: 16px;
+  cursor: pointer;
+  height: 100%;
+  padding: 1.5rem;
+  transition: all 0.3s ease;
+}
+
+.role-option:hover {
+  border-color: var(--udea-verde-medio);
+  box-shadow: 0 10px 25px rgba(124, 150, 64, 0.15);
+  transform: translateY(-5px);
+}
+
+.role-icon {
+  align-items: center;
+  border-radius: 50%;
+  color: white;
+  display: flex;
+  font-size: 2rem;
+  height: 80px;
+  justify-content: center;
+  margin: 0 auto 1.5rem;
+  width: 80px;
+}
+
+.coordinador-icon {
+  background: linear-gradient(135deg, var(--udea-turquesa), var(--udea-verde-oscuro));
+}
+
+.btn-select {
+  background: transparent;
+  border: 2px solid var(--udea-verde-principal);
+  border-radius: 30px;
+  color: var(--udea-verde-principal);
+  font-weight: 600;
+  margin-top: 1rem;
+  padding: 0.6rem 1.5rem;
+  transition: all 0.2s ease;
+  width: 100%;
+}
+
+.btn-select:hover {
+  background: var(--udea-verde-principal);
+  color: white;
+}
+
 /* FILTROS */
 .filter-card {
   background: var(--udea-blanco);
@@ -185,6 +234,8 @@ body {
   overflow: hidden;
   transition: all 0.3s ease;
   height: 100%;
+  display: flex;
+  flex-direction: column;
   animation: fadeIn 0.5s ease-out;
 }
 
@@ -197,6 +248,7 @@ body {
   background: linear-gradient(135deg, rgba(124, 150, 64, 0.1) 0%, rgba(0, 181, 173, 0.1) 100%);
   padding: 1.5rem;
   border-bottom: 1px solid rgba(124, 150, 64, 0.1);
+  min-height: 190px;
 }
 
 .semillero-title {
@@ -227,7 +279,14 @@ body {
 }
 
 .semillero-body {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
   padding: 1.5rem;
+}
+
+.semillero-info {
+  flex: 1;
 }
 
 .info-item {
@@ -252,6 +311,11 @@ body {
   color: var(--udea-verde-principal);
   margin-right: 0.5rem;
   width: 20px;
+}
+
+.semillero-actions {
+  margin-top: auto;
+  padding-top: 1rem;
 }
 
 /* MODAL UDEA */
@@ -314,6 +378,34 @@ body {
   height: 2px;
   background: var(--udea-gris);
   z-index: 0;
+}
+
+.registration-footer {
+  gap: 0.75rem;
+}
+
+.registration-footer .btn {
+  align-items: center;
+  display: inline-flex;
+  font-size: 1rem;
+  font-weight: 600;
+  justify-content: center;
+  margin-top: 0;
+  min-height: 56px;
+  padding: 0 1.5rem;
+  width: 160px;
+}
+
+.registration-footer .btn-udea {
+  font-size: 1.1rem;
+  min-height: 64px;
+  width: 220px;
+}
+
+@media (max-width: 575.98px) {
+  .registration-footer .btn {
+    width: 100%;
+  }
 }
 
 /* FOOTER */

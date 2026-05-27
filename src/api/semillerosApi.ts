@@ -98,8 +98,26 @@ export async function iniciarCaracterizacion(token: string): Promise<SemilleroCo
   });
 }
 
+export async function getMisSemilleros(token: string): Promise<SemilleroCoordinador[]> {
+  return apiFetch<SemilleroCoordinador[]>('/api/v1/coordinador/semilleros/mis-semilleros', {
+    headers: authHeaders(token),
+  });
+}
+
 export async function getMiSemillero(token: string): Promise<SemilleroCoordinador> {
-  return apiFetch<SemilleroCoordinador>('/api/v1/coordinador/semilleros/mi-semillero', {
+  return apiFetch<SemilleroCoordinador[]>('/api/v1/coordinador/semilleros/mis-semilleros', {
+    headers: authHeaders(token),
+  }).then((semilleros) => {
+    if (semilleros.length === 0) throw new Error('No tienes semilleros registrados.');
+    return semilleros[0];
+  });
+}
+
+export async function getSemilleroCoordinadorById(
+  idSemillero: number,
+  token: string,
+): Promise<SemilleroCoordinador> {
+  return apiFetch<SemilleroCoordinador>(`/api/v1/coordinador/semilleros/${idSemillero}`, {
     headers: authHeaders(token),
   });
 }

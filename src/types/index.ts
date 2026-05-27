@@ -30,7 +30,10 @@ export interface SemilleroDetalle {
   grupoInvestigacion: string;
   facultad: string;
   campus: string;
+  departamento?: string;
   areaOcde: string;
+  ods?: string | string[];
+  correoCoordinador?: string;
   estado: string;
   totalSemilleristas: number;
   totalActividadesCientificas: number;
@@ -112,6 +115,8 @@ export interface SemilleroCoordinador {
   facultad: string | null;
   campus: string | null;
   areaOcde: string | null;
+  fechaCreacion?: string | null;
+  fechaActualizacion?: string | null;
 }
 
 export interface GuardarGeneralPayload {
@@ -129,4 +134,73 @@ export interface GuardarGeneralPayload {
   idUnidadAcademica: number;
   idCampus: number;
   idAreaOcde: number;
+}
+
+export type SiNo = 'si' | 'no' | '';
+
+export interface ProduccionFormData {
+  tieneArticulos: SiNo;
+  cantArticulos: string;
+  tieneLibros: SiNo;
+  cantLibros: string;
+  organizaEventos: SiNo;
+  cantEventos: string;
+  participaEventos: SiNo;
+  cantParticipaciones: string;
+}
+
+export interface OrganizacionFormData {
+  tieneMision: SiNo;
+  mision: string;
+  tieneVision: SiNo;
+  vision: string;
+  recursos: string[];
+  fuentes: string[];
+}
+
+export interface RelacionamientoFormData {
+  adscrito: SiNo;
+  grupo: string;
+  relacionGrupo: string;
+  centro: string;
+  relacionCentro: string;
+  departamento: string;
+  relacionDept: string;
+  facultad: string;
+  relacionFacultad: string;
+}
+
+export interface ActividadesFormData {
+  clubes: SiNo;
+  seminarios: SiNo;
+  salidas: SiNo;
+  talleres: SiNo;
+  conversatorios: SiNo;
+  jornadas: SiNo;
+  redColsi: SiNo;
+  ponNac: SiNo;
+  ponInt: SiNo;
+}
+
+export interface DofaFormData {
+  fortalezas: string;
+  debilidades: string;
+  oportunidades: string;
+  amenazas: string;
+}
+
+export interface OdsFormData {
+  areaOcde: string;
+  subArea: string;
+  odsPrincipal: string;
+  observaciones: string;
+}
+
+export interface CaracterizacionDraft {
+  produccion: ProduccionFormData;
+  organizacion: OrganizacionFormData;
+  relacionamiento: RelacionamientoFormData;
+  actividades: ActividadesFormData;
+  dofa: DofaFormData;
+  ods: OdsFormData;
 }

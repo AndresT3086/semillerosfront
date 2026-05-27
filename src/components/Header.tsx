@@ -28,14 +28,6 @@ export default function Header({ onScrollToFilters, onAccesoSigsi }: HeaderProps
               >
                 <i className="bi bi-box-arrow-in-right me-1"></i>Acceso SIGSI
               </button>
-              <button
-                className="btn-crear-semillero"
-                disabled
-                title="Disponible en el próximo sprint"
-                style={{ opacity: 0.5, cursor: 'not-allowed' }}
-              >
-                <i className="bi bi-plus-circle-fill"></i>Crear Semillero
-              </button>
             </div>
           </div>
         </div>

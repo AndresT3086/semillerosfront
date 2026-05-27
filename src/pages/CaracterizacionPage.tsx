@@ -1,10 +1,9 @@
 import { useEffect, useState } from 'react';
-import type { GuardarGeneralPayload, SemilleroCoordinador } from '../types';
+import type { CaracterizacionDraft, GuardarGeneralPayload, SemilleroCoordinador } from '../types';
 import {
   finalizarCaracterizacion,
-  getMiSemillero,
+  getSemilleroCoordinadorById,
   guardarPestanaGeneral,
-  iniciarCaracterizacion,
 } from '../api/semillerosApi';
 import TabGeneral from '../components/caracterizacion/TabGeneral';
 import TabProduccion from '../components/caracterizacion/TabProduccion';
@@ -17,6 +16,8 @@ import TabOds from '../components/caracterizacion/TabOds';
 interface Props {
   token: string;
   correoCoordinador: string;
+  semilleroId: number;
+  onBack: () => void;
   onLogout: () => void;
 }
 
@@ -30,9 +31,84 @@ const TABS = [
   { label: 'ODS', icon: '🌍' },
 ];
 
-const MOCK_DELAY_MS = 450;
+const DRAFT_VERSION = 1;
 
-export default function CaracterizacionPage({ token, correoCoordinador, onLogout }: Props) {
+const EMPTY_DRAFT: CaracterizacionDraft = {
+  produccion: {
+    tieneArticulos: '',
+    cantArticulos: '',
+    tieneLibros: '',
+    cantLibros: '',
+    organizaEventos: '',
+    cantEventos: '',
+    participaEventos: '',
+    cantParticipaciones: '',
+  },
+  organizacion: {
+    tieneMision: '',
+    mision: '',
+    tieneVision: '',
+    vision: '',
+    recursos: [],
+    fuentes: [],
+  },
+  relacionamiento: {
+    adscrito: '',
+    grupo: '',
+    relacionGrupo: '',
+    centro: '',
+    relacionCentro: '',
+    departamento: '',
+    relacionDept: '',
+    facultad: '',
+    relacionFacultad: '',
+  },
+  actividades: {
+    clubes: '',
+    seminarios: '',
+    salidas: '',
+    talleres: '',
+    conversatorios: '',
+    jornadas: '',
+    redColsi: '',
+    ponNac: '',
+    ponInt: '',
+  },
+  dofa: {
+    fortalezas: '',
+    debilidades: '',
+    oportunidades: '',
+    amenazas: '',
+  },
+  ods: {
+    areaOcde: '',
+    subArea: '',
+    odsPrincipal: '',
+    observaciones: '',
+  },
+};
+
+function draftStorageKey(semilleroId: number) {
+  return `sigsi:caracterizacion:${DRAFT_VERSION}:${semilleroId}`;
+}
+
+function loadLocalDraft(semilleroId: number): CaracterizacionDraft {
+  try {
+    const raw = window.sessionStorage.getItem(draftStorageKey(semilleroId));
+    if (!raw) return EMPTY_DRAFT;
+    return { ...EMPTY_DRAFT, ...JSON.parse(raw) };
+  } catch {
+    return EMPTY_DRAFT;
+  }
+}
+
+export default function CaracterizacionPage({
+  token,
+  correoCoordinador,
+  semilleroId,
+  onBack,
+  onLogout,
+}: Props) {
   const [activeTab, setActiveTab] = useState(0);
   const [semillero, setSemillero] = useState<SemilleroCoordinador | null>(null);
   const [loading, setLoading] = useState(true);
@@ -41,29 +117,35 @@ export default function CaracterizacionPage({ token, correoCoordinador, onLogout
   const [savedTabs, setSavedTabs] = useState<Set<number>>(new Set());
   const [finalizado, setFinalizado] = useState(false);
   const [finalizandoMsg, setFinalizandoMsg] = useState<string | null>(null);
+  const [draft, setDraft] = useState<CaracterizacionDraft>(() => loadLocalDraft(semilleroId));
 
   useEffect(() => {
     loadSemillero();
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
+  useEffect(() => {
+    window.sessionStorage.setItem(draftStorageKey(semilleroId), JSON.stringify(draft));
+  }, [draft, semilleroId]);
+
+  function updateDraft<K extends keyof CaracterizacionDraft>(section: K, value: CaracterizacionDraft[K]) {
+    setDraft(prev => ({ ...prev, [section]: value }));
+  }
+
   async function loadSemillero() {
     setLoading(true);
     setError(null);
+    setSavedTabs(new Set());
+    setFinalizado(false);
+    setFinalizandoMsg(null);
     try {
-      const s = await getMiSemillero(token);
+      const s = await getSemilleroCoordinadorById(semilleroId, token);
       setSemillero(s);
       if (s.estadoCaracterizacion === 'COMPLETO') setFinalizado(true);
       if (s.estadoCaracterizacion && s.estadoCaracterizacion !== 'GENERAL_PENDIENTE') {
         setSavedTabs(prev => new Set([...prev, 0]));
       }
-    } catch {
-      // No existing semillero → create a new borrador
-      try {
-        const nuevo = await iniciarCaracterizacion(token);
-        setSemillero(nuevo);
-      } catch (err2) {
-        setError(err2 instanceof Error ? err2.message : 'No se pudo iniciar la caracterización.');
-      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'No se pudo cargar la caracterización.');
     } finally {
       setLoading(false);
     }
@@ -86,12 +168,11 @@ export default function CaracterizacionPage({ token, correoCoordinador, onLogout
     }
   }
 
-  // ── Tabs 1-5 → mock ───────────────────────────────────────────────────────
-  async function handleSaveMock(tabIndex: number) {
+  // ── Tabs 1-6 keep a local draft until backend endpoints exist ─────────────
+  async function handleSaveDraft(tabIndex: number) {
     setSaving(true);
     setError(null);
     try {
-      await new Promise(r => setTimeout(r, MOCK_DELAY_MS));
       setSavedTabs(prev => new Set([...prev, tabIndex]));
       setActiveTab(tabIndex + 1);
     } finally {
@@ -99,12 +180,10 @@ export default function CaracterizacionPage({ token, correoCoordinador, onLogout
     }
   }
 
-  // ── Tab 6 (ODS) mock save (last tab, no auto-advance) ────────────────────
   async function handleSaveOds() {
     setSaving(true);
     setError(null);
     try {
-      await new Promise(r => setTimeout(r, MOCK_DELAY_MS));
       setSavedTabs(prev => new Set([...prev, 6]));
     } finally {
       setSaving(false);
@@ -147,7 +226,7 @@ export default function CaracterizacionPage({ token, correoCoordinador, onLogout
     return (
       <div className="container py-5 text-center">
         <div className="alert alert-danger">{error ?? 'No se pudo cargar el semillero.'}</div>
-        <button className="btn btn-outline-secondary" onClick={onLogout}>Volver</button>
+        <button className="btn btn-outline-secondary" onClick={onBack}>Volver</button>
       </div>
     );
   }
@@ -175,6 +254,10 @@ export default function CaracterizacionPage({ token, correoCoordinador, onLogout
       </div>
 
       <div className="container py-4" style={{ maxWidth: 960 }}>
+        <button type="button" className="btn btn-outline-secondary btn-sm mb-3" onClick={onBack}>
+          <i className="bi bi-arrow-left me-1"></i>Mis semilleros
+        </button>
+
         {/* Código del semillero */}
         <div className="d-flex align-items-center justify-content-between p-3 rounded mb-3 text-white fw-semibold"
           style={{ background: 'linear-gradient(135deg, var(--udea-verde-medio), var(--udea-verde-oscuro))' }}>
@@ -249,22 +332,54 @@ export default function CaracterizacionPage({ token, correoCoordinador, onLogout
               <TabGeneral semillero={semillero} onSave={handleSaveGeneral} saving={saving} />
             )}
             {activeTab === 1 && (
-              <TabProduccion onSave={() => handleSaveMock(1)} onPrev={() => setActiveTab(0)} saving={saving} />
+              <TabProduccion
+                value={draft.produccion}
+                onChange={value => updateDraft('produccion', value)}
+                onSave={() => handleSaveDraft(1)}
+                onPrev={() => setActiveTab(0)}
+                saving={saving}
+              />
             )}
             {activeTab === 2 && (
-              <TabOrganizacion onSave={() => handleSaveMock(2)} onPrev={() => setActiveTab(1)} saving={saving} />
+              <TabOrganizacion
+                value={draft.organizacion}
+                onChange={value => updateDraft('organizacion', value)}
+                onSave={() => handleSaveDraft(2)}
+                onPrev={() => setActiveTab(1)}
+                saving={saving}
+              />
             )}
             {activeTab === 3 && (
-              <TabRelacionamiento onSave={() => handleSaveMock(3)} onPrev={() => setActiveTab(2)} saving={saving} />
+              <TabRelacionamiento
+                value={draft.relacionamiento}
+                onChange={value => updateDraft('relacionamiento', value)}
+                onSave={() => handleSaveDraft(3)}
+                onPrev={() => setActiveTab(2)}
+                saving={saving}
+              />
             )}
             {activeTab === 4 && (
-              <TabActividades onSave={() => handleSaveMock(4)} onPrev={() => setActiveTab(3)} saving={saving} />
+              <TabActividades
+                value={draft.actividades}
+                onChange={value => updateDraft('actividades', value)}
+                onSave={() => handleSaveDraft(4)}
+                onPrev={() => setActiveTab(3)}
+                saving={saving}
+              />
             )}
             {activeTab === 5 && (
-              <TabDofa onSave={() => handleSaveMock(5)} onPrev={() => setActiveTab(4)} saving={saving} />
+              <TabDofa
+                value={draft.dofa}
+                onChange={value => updateDraft('dofa', value)}
+                onSave={() => handleSaveDraft(5)}
+                onPrev={() => setActiveTab(4)}
+                saving={saving}
+              />
             )}
             {activeTab === 6 && (
               <TabOds
+                value={draft.ods}
+                onChange={value => updateDraft('ods', value)}
                 onSave={handleSaveOds}
                 onPrev={() => setActiveTab(5)}
                 saving={saving}

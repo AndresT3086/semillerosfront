@@ -1,34 +1,28 @@
-import { useState } from 'react';
+import type { ActividadesFormData, SiNo } from '../../types';
 
 interface Props {
+  value: ActividadesFormData;
+  onChange: (value: ActividadesFormData) => void;
   onSave: () => void;
   onPrev: () => void;
   saving: boolean;
 }
 
-type Resp = 'si' | 'no' | '';
+export default function TabActividades({ value, onChange, onSave, onPrev, saving }: Props) {
+  const set = (field: keyof ActividadesFormData, fieldValue: SiNo) => {
+    onChange({ ...value, [field]: fieldValue });
+  };
 
-export default function TabActividades({ onSave, onPrev, saving }: Props) {
-  const [clubes, setclubes] = useState<Resp>('');
-  const [seminarios, setSeminarios] = useState<Resp>('');
-  const [salidas, setSalidas] = useState<Resp>('');
-  const [talleres, setTalleres] = useState<Resp>('');
-  const [conversatorios, setConversatorios] = useState<Resp>('');
-  const [jornadas, setJornadas] = useState<Resp>('');
-  const [redColsi, setRedColsi] = useState<Resp>('');
-  const [ponNac, setPonNac] = useState<Resp>('');
-  const [ponInt, setPonInt] = useState<Resp>('');
-
-  function RadioRow({ label, value, onChange }: { label: string; value: Resp; onChange: (v: Resp) => void }) {
+  function RadioRow({ label, selected, onChange }: { label: string; selected: SiNo; onChange: (v: SiNo) => void }) {
     return (
       <tr>
         <td className="small py-2 pe-4">{label}</td>
         <td className="text-center" style={{ width: 60 }}>
-          <input type="radio" name={label} checked={value === 'si'} onChange={() => onChange('si')}
+          <input type="radio" name={label} checked={selected === 'si'} onChange={() => onChange('si')}
             style={{ accentColor: 'var(--udea-verde-principal)' }} />
         </td>
         <td className="text-center" style={{ width: 60 }}>
-          <input type="radio" name={label} checked={value === 'no'} onChange={() => onChange('no')}
+          <input type="radio" name={label} checked={selected === 'no'} onChange={() => onChange('no')}
             style={{ accentColor: 'var(--udea-verde-principal)' }} />
         </td>
       </tr>
@@ -58,11 +52,11 @@ export default function TabActividades({ onSave, onPrev, saving }: Props) {
             <table className="table table-sm table-bordered mb-0" style={{ fontSize: '0.85rem' }}>
               {tableHead}
               <tbody>
-                <RadioRow label="Clubes de Revista" value={clubes} onChange={setclubes} />
-                <RadioRow label="Seminarios" value={seminarios} onChange={setSeminarios} />
-                <RadioRow label="Salidas de campo" value={salidas} onChange={setSalidas} />
-                <RadioRow label="Talleres" value={talleres} onChange={setTalleres} />
-                <RadioRow label="Conversatorios" value={conversatorios} onChange={setConversatorios} />
+                <RadioRow label="Clubes de Revista" selected={value.clubes} onChange={v => set('clubes', v)} />
+                <RadioRow label="Seminarios" selected={value.seminarios} onChange={v => set('seminarios', v)} />
+                <RadioRow label="Salidas de campo" selected={value.salidas} onChange={v => set('salidas', v)} />
+                <RadioRow label="Talleres" selected={value.talleres} onChange={v => set('talleres', v)} />
+                <RadioRow label="Conversatorios" selected={value.conversatorios} onChange={v => set('conversatorios', v)} />
               </tbody>
             </table>
           </div>
@@ -73,10 +67,10 @@ export default function TabActividades({ onSave, onPrev, saving }: Props) {
             <table className="table table-sm table-bordered mb-0" style={{ fontSize: '0.85rem' }}>
               {tableHead}
               <tbody>
-                <RadioRow label="Jornadas Universitarias" value={jornadas} onChange={setJornadas} />
-                <RadioRow label="Eventos RedCOLSI" value={redColsi} onChange={setRedColsi} />
-                <RadioRow label="Ponencias Nacionales" value={ponNac} onChange={setPonNac} />
-                <RadioRow label="Ponencias Internacionales" value={ponInt} onChange={setPonInt} />
+                <RadioRow label="Jornadas Universitarias" selected={value.jornadas} onChange={v => set('jornadas', v)} />
+                <RadioRow label="Eventos RedCOLSI" selected={value.redColsi} onChange={v => set('redColsi', v)} />
+                <RadioRow label="Ponencias Nacionales" selected={value.ponNac} onChange={v => set('ponNac', v)} />
+                <RadioRow label="Ponencias Internacionales" selected={value.ponInt} onChange={v => set('ponInt', v)} />
               </tbody>
             </table>
           </div>

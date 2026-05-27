@@ -10,6 +10,27 @@ interface DetailsModalProps {
   onInscribirse: (id: number, nombre: string) => void;
 }
 
+function mockOdsPorArea(areaOcde?: string) {
+  const area = areaOcde?.toLowerCase() ?? '';
+  if (area.includes('salud')) return 'ODS 3 - Salud y bienestar';
+  if (area.includes('agr')) return 'ODS 2 - Hambre cero';
+  if (area.includes('educ')) return 'ODS 4 - Educación de calidad';
+  if (area.includes('social') || area.includes('derecho')) return 'ODS 16 - Paz, justicia e instituciones sólidas';
+  return 'ODS 9 - Industria, innovación e infraestructura';
+}
+
+function detalleExtra(detalle: SemilleroDetalle) {
+  const ods = Array.isArray(detalle.ods)
+    ? detalle.ods.join(', ')
+    : detalle.ods ?? mockOdsPorArea(detalle.areaOcde);
+
+  return {
+    departamento: detalle.departamento ?? 'Antioquia',
+    ods,
+    correoCoordinador: detalle.correoCoordinador ?? detalle.correoSemillero,
+  };
+}
+
 export default function DetailsModal({
   semilleroId,
   isOpen,
@@ -21,6 +42,7 @@ export default function DetailsModal({
   const [detalle, setDetalle] = useState<SemilleroDetalle | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const extra = detalle ? detalleExtra(detalle) : null;
 
   useEffect(() => {
     if (!modalRef.current) return;
@@ -99,6 +121,10 @@ export default function DetailsModal({
                       <span className="info-value">{detalle.campus}</span>
                     </div>
                     <div className="info-item">
+                      <span className="info-label">Departamento:</span>
+                      <span className="info-value">{extra?.departamento}</span>
+                    </div>
+                    <div className="info-item">
                       <span className="info-label">Año creación:</span>
                       <span className="info-value">{detalle.anioCreacion}</span>
                     </div>
@@ -116,6 +142,14 @@ export default function DetailsModal({
                     <div className="info-item">
                       <span className="info-label">Correo semillero:</span>
                       <span className="info-value">{detalle.correoSemillero}</span>
+                    </div>
+                    <div className="info-item">
+                      <span className="info-label">Correo coordinador:</span>
+                      <span className="info-value">{extra?.correoCoordinador}</span>
+                    </div>
+                    <div className="info-item">
+                      <span className="info-label">ODS:</span>
+                      <span className="info-value">{extra?.ods}</span>
                     </div>
                     <div className="info-item">
                       <span className="info-label">Teléfono:</span>

@@ -1,16 +1,17 @@
-import { useState } from 'react';
+import type { DofaFormData } from '../../types';
 
 interface Props {
+  value: DofaFormData;
+  onChange: (value: DofaFormData) => void;
   onSave: () => void;
   onPrev: () => void;
   saving: boolean;
 }
 
-export default function TabDofa({ onSave, onPrev, saving }: Props) {
-  const [fortalezas, setFortalezas] = useState('');
-  const [debilidades, setDebilidades] = useState('');
-  const [oportunidades, setOportunidades] = useState('');
-  const [amenazas, setAmenazas] = useState('');
+export default function TabDofa({ value, onChange, onSave, onPrev, saving }: Props) {
+  const set = (field: keyof DofaFormData, fieldValue: string) => {
+    onChange({ ...value, [field]: fieldValue });
+  };
 
   return (
     <div>
@@ -25,7 +26,7 @@ export default function TabDofa({ onSave, onPrev, saving }: Props) {
           </label>
           <textarea className="form-control form-control-sm" rows={4}
             placeholder="Ej. Compromiso del equipo, interdisciplinariedad, liderazgo activo..."
-            value={fortalezas} onChange={e => setFortalezas(e.target.value)} />
+            value={value.fortalezas} onChange={e => set('fortalezas', e.target.value)} />
         </div>
         <div className="col-md-6">
           <label className="form-label small fw-semibold" style={{ color: 'var(--udea-verde-oscuro)' }}>
@@ -33,7 +34,7 @@ export default function TabDofa({ onSave, onPrev, saving }: Props) {
           </label>
           <textarea className="form-control form-control-sm" rows={4}
             placeholder="Ej. Falta de financiación, alta rotación de miembros..."
-            value={debilidades} onChange={e => setDebilidades(e.target.value)} />
+            value={value.debilidades} onChange={e => set('debilidades', e.target.value)} />
         </div>
         <div className="col-md-6">
           <label className="form-label small fw-semibold" style={{ color: 'var(--udea-verde-oscuro)' }}>
@@ -41,7 +42,7 @@ export default function TabDofa({ onSave, onPrev, saving }: Props) {
           </label>
           <textarea className="form-control form-control-sm" rows={4}
             placeholder="Ej. Convocatorias internas, alianzas con grupos de investigación..."
-            value={oportunidades} onChange={e => setOportunidades(e.target.value)} />
+            value={value.oportunidades} onChange={e => set('oportunidades', e.target.value)} />
         </div>
         <div className="col-md-6">
           <label className="form-label small fw-semibold" style={{ color: 'var(--udea-verde-oscuro)' }}>
@@ -49,7 +50,7 @@ export default function TabDofa({ onSave, onPrev, saving }: Props) {
           </label>
           <textarea className="form-control form-control-sm" rows={4}
             placeholder="Ej. Recortes presupuestales, competencia de otros semilleros..."
-            value={amenazas} onChange={e => setAmenazas(e.target.value)} />
+            value={value.amenazas} onChange={e => set('amenazas', e.target.value)} />
         </div>
       </div>
 

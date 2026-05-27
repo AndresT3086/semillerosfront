@@ -1,21 +1,17 @@
-import { useState } from 'react';
+import type { RelacionamientoFormData } from '../../types';
 
 interface Props {
+  value: RelacionamientoFormData;
+  onChange: (value: RelacionamientoFormData) => void;
   onSave: () => void;
   onPrev: () => void;
   saving: boolean;
 }
 
-export default function TabRelacionamiento({ onSave, onPrev, saving }: Props) {
-  const [adscrito, setAdscrito] = useState('');
-  const [grupo, setGrupo] = useState('');
-  const [relacionGrupo, setRelacionGrupo] = useState('');
-  const [centro, setCentro] = useState('');
-  const [relacionCentro, setRelacionCentro] = useState('');
-  const [departamento, setDepartamento] = useState('');
-  const [relacionDept, setRelacionDept] = useState('');
-  const [facultad, setFacultad] = useState('');
-  const [relacionFacultad, setRelacionFacultad] = useState('');
+export default function TabRelacionamiento({ value, onChange, onSave, onPrev, saving }: Props) {
+  const set = (field: keyof RelacionamientoFormData, fieldValue: string) => {
+    onChange({ ...value, [field]: fieldValue });
+  };
 
   return (
     <div>
@@ -30,8 +26,8 @@ export default function TabRelacionamiento({ onSave, onPrev, saving }: Props) {
           <div className="p-2 rounded d-flex gap-3" style={{ background: 'var(--udea-gris-claro)' }}>
             {['si', 'no'].map(v => (
               <label key={v} className="d-flex align-items-center gap-1 small" style={{ cursor: 'pointer' }}>
-                <input type="radio" name="adscrito" value={v} checked={adscrito === v}
-                  onChange={() => setAdscrito(v)} style={{ accentColor: 'var(--udea-verde-principal)' }} />
+                <input type="radio" name="adscrito" value={v} checked={value.adscrito === v}
+                  onChange={() => set('adscrito', v)} style={{ accentColor: 'var(--udea-verde-principal)' }} />
                 {v === 'si' ? 'Sí' : 'No'}
               </label>
             ))}
@@ -40,12 +36,12 @@ export default function TabRelacionamiento({ onSave, onPrev, saving }: Props) {
         <div className="col-md-4">
           <label className="form-label small fw-semibold" style={{ color: 'var(--udea-verde-oscuro)' }}>Grupo de investigación</label>
           <input type="text" className="form-control form-control-sm" placeholder="Nombre o código del grupo"
-            value={grupo} onChange={e => setGrupo(e.target.value)} disabled={adscrito !== 'si'} />
+            value={value.grupo} onChange={e => set('grupo', e.target.value)} disabled={value.adscrito !== 'si'} />
         </div>
         <div className="col-md-4">
           <label className="form-label small fw-semibold" style={{ color: 'var(--udea-verde-oscuro)' }}>Relación con el grupo</label>
           <input type="text" className="form-control form-control-sm" placeholder="Ej. Reuniones mensuales"
-            value={relacionGrupo} onChange={e => setRelacionGrupo(e.target.value)} disabled={adscrito !== 'si'} />
+            value={value.relacionGrupo} onChange={e => set('relacionGrupo', e.target.value)} disabled={value.adscrito !== 'si'} />
         </div>
       </div>
 
@@ -54,17 +50,17 @@ export default function TabRelacionamiento({ onSave, onPrev, saving }: Props) {
         <div className="col-md-4">
           <label className="form-label small fw-semibold" style={{ color: 'var(--udea-verde-oscuro)' }}>Centro de investigaciones</label>
           <input type="text" className="form-control form-control-sm" placeholder="Nombre del centro"
-            value={centro} onChange={e => setCentro(e.target.value)} />
+            value={value.centro} onChange={e => set('centro', e.target.value)} />
         </div>
         <div className="col-md-4">
           <label className="form-label small fw-semibold" style={{ color: 'var(--udea-verde-oscuro)' }}>Relación con el centro</label>
           <input type="text" className="form-control form-control-sm" placeholder="NE"
-            value={relacionCentro} onChange={e => setRelacionCentro(e.target.value)} />
+            value={value.relacionCentro} onChange={e => set('relacionCentro', e.target.value)} />
         </div>
         <div className="col-md-4">
           <label className="form-label small fw-semibold" style={{ color: 'var(--udea-verde-oscuro)' }}>Departamento</label>
           <input type="text" className="form-control form-control-sm" placeholder="Ej. Antropología"
-            value={departamento} onChange={e => setDepartamento(e.target.value)} />
+            value={value.departamento} onChange={e => set('departamento', e.target.value)} />
         </div>
       </div>
 
@@ -73,17 +69,17 @@ export default function TabRelacionamiento({ onSave, onPrev, saving }: Props) {
         <div className="col-md-4">
           <label className="form-label small fw-semibold" style={{ color: 'var(--udea-verde-oscuro)' }}>Relación con el departamento</label>
           <input type="text" className="form-control form-control-sm" placeholder="NE"
-            value={relacionDept} onChange={e => setRelacionDept(e.target.value)} />
+            value={value.relacionDept} onChange={e => set('relacionDept', e.target.value)} />
         </div>
         <div className="col-md-4">
           <label className="form-label small fw-semibold" style={{ color: 'var(--udea-verde-oscuro)' }}>Facultad</label>
           <input type="text" className="form-control form-control-sm" placeholder="Ej. Ingeniería"
-            value={facultad} onChange={e => setFacultad(e.target.value)} />
+            value={value.facultad} onChange={e => set('facultad', e.target.value)} />
         </div>
         <div className="col-md-4">
           <label className="form-label small fw-semibold" style={{ color: 'var(--udea-verde-oscuro)' }}>Relación con la facultad</label>
           <input type="text" className="form-control form-control-sm" placeholder="NE"
-            value={relacionFacultad} onChange={e => setRelacionFacultad(e.target.value)} />
+            value={value.relacionFacultad} onChange={e => set('relacionFacultad', e.target.value)} />
         </div>
       </div>
 

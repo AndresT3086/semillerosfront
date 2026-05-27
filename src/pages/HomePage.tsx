@@ -138,7 +138,7 @@ export default function HomePage({ onAccesoSigsi }: HomePageProps) {
         )}
 
         {/* Semillero list */}
-        <div className="row">
+        <div className="row gy-4">
           <SemilleroList
             semilleros={semilleros}
             loading={loading}

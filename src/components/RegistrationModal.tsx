@@ -394,7 +394,7 @@ export default function RegistrationModal({
           </div>
 
           {/* ── Footer buttons ── */}
-          <div className="modal-footer">
+          <div className="modal-footer registration-footer">
             {step > 1 && step < 3 && (
               <button type="button" className="btn btn-secondary" onClick={handlePrev}>
                 <i className="bi bi-arrow-left me-1"></i>Anterior

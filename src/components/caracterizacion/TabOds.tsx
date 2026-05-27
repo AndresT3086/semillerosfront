@@ -1,6 +1,8 @@
-import { useState } from 'react';
+import type { OdsFormData } from '../../types';
 
 interface Props {
+  value: OdsFormData;
+  onChange: (value: OdsFormData) => void;
   onSave: () => void;
   onPrev: () => void;
   saving: boolean;
@@ -32,11 +34,10 @@ const ODS_LIST = [
 const AREAS_OCDE = ['Ciencias Naturales', 'Ingeniería y Tecnología', 'Ciencias Médicas y de la Salud',
   'Ciencias Agrícolas', 'Ciencias Sociales', 'Humanidades'];
 
-export default function TabOds({ onSave, onPrev, saving, onFinalizar, canFinalizar, finalizado }: Props) {
-  const [areaOcde, setAreaOcde] = useState('');
-  const [subArea, setSubArea] = useState('');
-  const [odsPrincipal, setOdsPrincipal] = useState('');
-  const [observaciones, setObservaciones] = useState('');
+export default function TabOds({ value, onChange, onSave, onPrev, saving, onFinalizar, canFinalizar, finalizado }: Props) {
+  const set = (field: keyof OdsFormData, fieldValue: string) => {
+    onChange({ ...value, [field]: fieldValue });
+  };
 
   return (
     <div>
@@ -49,7 +50,7 @@ export default function TabOds({ onSave, onPrev, saving, onFinalizar, canFinaliz
           <label className="form-label small fw-semibold" style={{ color: 'var(--udea-verde-oscuro)' }}>
             Área OCDE <span style={{ color: '#e53e3e' }}>*</span>
           </label>
-          <select className="form-select form-select-sm" value={areaOcde} onChange={e => setAreaOcde(e.target.value)}>
+          <select className="form-select form-select-sm" value={value.areaOcde} onChange={e => set('areaOcde', e.target.value)}>
             <option value="">Seleccione...</option>
             {AREAS_OCDE.map(a => <option key={a} value={a}>{a}</option>)}
           </select>
@@ -57,11 +58,11 @@ export default function TabOds({ onSave, onPrev, saving, onFinalizar, canFinaliz
         <div className="col-md-4">
           <label className="form-label small fw-semibold" style={{ color: 'var(--udea-verde-oscuro)' }}>Sub-área OCDE</label>
           <input type="text" className="form-control form-control-sm" placeholder="Ej. Computación, Química..."
-            value={subArea} onChange={e => setSubArea(e.target.value)} />
+            value={value.subArea} onChange={e => set('subArea', e.target.value)} />
         </div>
         <div className="col-md-4">
           <label className="form-label small fw-semibold" style={{ color: 'var(--udea-verde-oscuro)' }}>ODS principal</label>
-          <select className="form-select form-select-sm" value={odsPrincipal} onChange={e => setOdsPrincipal(e.target.value)}>
+          <select className="form-select form-select-sm" value={value.odsPrincipal} onChange={e => set('odsPrincipal', e.target.value)}>
             <option value="">Seleccione...</option>
             {ODS_LIST.map(o => <option key={o.id} value={String(o.id)}>{o.label}</option>)}
           </select>
@@ -72,7 +73,7 @@ export default function TabOds({ onSave, onPrev, saving, onFinalizar, canFinaliz
         <label className="form-label small fw-semibold" style={{ color: 'var(--udea-verde-oscuro)' }}>Observaciones finales</label>
         <textarea className="form-control form-control-sm" rows={3}
           placeholder="Información adicional relevante sobre el semillero..."
-          value={observaciones} onChange={e => setObservaciones(e.target.value)} />
+          value={value.observaciones} onChange={e => set('observaciones', e.target.value)} />
       </div>
 
       {/* Finalizar info */}

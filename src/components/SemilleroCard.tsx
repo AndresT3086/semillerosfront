@@ -32,32 +32,34 @@ export default function SemilleroCard({
       </div>
 
       <div className="semillero-body">
-        <div className="info-item">
-          <span className="info-label">
-            <i className="bi bi-building info-icon"></i>Facultad:
-          </span>
-          <span className="info-value">{semillero.facultad}</span>
-        </div>
-        <div className="info-item">
-          <span className="info-label">
-            <i className="bi bi-geo-alt info-icon"></i>Campus:
-          </span>
-          <span className="info-value">{semillero.campus}</span>
-        </div>
-        <div className="info-item">
-          <span className="info-label">
-            <i className="bi bi-calendar-check info-icon"></i>Año creación:
-          </span>
-          <span className="info-value">{semillero.anioCreacion}</span>
-        </div>
-        <div className="info-item">
-          <span className="info-label">
-            <i className="bi bi-people info-icon"></i>Grupo investigación:
-          </span>
-          <span className="info-value">{semillero.grupoInvestigacion}</span>
+        <div className="semillero-info">
+          <div className="info-item">
+            <span className="info-label">
+              <i className="bi bi-building info-icon"></i>Facultad:
+            </span>
+            <span className="info-value">{semillero.facultad}</span>
+          </div>
+          <div className="info-item">
+            <span className="info-label">
+              <i className="bi bi-geo-alt info-icon"></i>Campus:
+            </span>
+            <span className="info-value">{semillero.campus}</span>
+          </div>
+          <div className="info-item">
+            <span className="info-label">
+              <i className="bi bi-calendar-check info-icon"></i>Año creación:
+            </span>
+            <span className="info-value">{semillero.anioCreacion}</span>
+          </div>
+          <div className="info-item">
+            <span className="info-label">
+              <i className="bi bi-people info-icon"></i>Grupo investigación:
+            </span>
+            <span className="info-value">{semillero.grupoInvestigacion}</span>
+          </div>
         </div>
 
-        <div className="d-grid mt-4">
+        <div className="d-grid semillero-actions">
           <button
             className="btn btn-udea"
             onClick={() => onInscribirse(semillero.id, semillero.nombre)}
