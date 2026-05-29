@@ -45,10 +45,6 @@ const EMPTY_DRAFT: CaracterizacionDraft = {
     cantParticipaciones: '',
   },
   organizacion: {
-    tieneMision: '',
-    mision: '',
-    tieneVision: '',
-    vision: '',
     recursos: [],
     fuentes: [],
   },

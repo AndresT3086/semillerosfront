@@ -16,7 +16,7 @@ const FUENTES = ['Recursos propios de la universidad', 'Convocatoria interna Ude
   'Sin financiación', 'Otra'];
 
 export default function TabOrganizacion({ value, onChange, onSave, onPrev, saving }: Props) {
-  const set = (field: keyof OrganizacionFormData, fieldValue: string | string[]) => {
+  const set = (field: keyof OrganizacionFormData, fieldValue: string[]) => {
     onChange({ ...value, [field]: fieldValue });
   };
 
@@ -24,43 +24,10 @@ export default function TabOrganizacion({ value, onChange, onSave, onPrev, savin
     set(field, list.includes(item) ? list.filter(x => x !== item) : [...list, item]);
   }
 
-  const radio = (name: string, value: string, onChange: (v: string) => void) => (
-    <div className="d-flex gap-3">
-      {['si', 'no'].map(v => (
-        <label key={v} className="d-flex align-items-center gap-1 small" style={{ cursor: 'pointer' }}>
-          <input type="radio" name={name} value={v} checked={value === v}
-            onChange={() => onChange(v)} style={{ accentColor: 'var(--udea-verde-principal)' }} />
-          {v === 'si' ? 'Sí' : 'No'}
-        </label>
-      ))}
-    </div>
-  );
-
   return (
     <div>
       <div className="p-2 rounded mb-3 fw-semibold text-white small" style={{ background: 'linear-gradient(135deg, var(--udea-verde-principal), var(--udea-verde-oscuro))' }}>
         🏢 Organización y Estructura
-      </div>
-
-      <div className="row g-3 mb-3">
-        <div className="col-md-6">
-          <label className="form-label small fw-semibold" style={{ color: 'var(--udea-verde-oscuro)' }}>¿Tiene Misión?</label>
-          <div className="p-2 rounded" style={{ background: 'var(--udea-gris-claro)' }}>{radio('mision', value.tieneMision, v => set('tieneMision', v))}</div>
-        </div>
-        <div className="col-md-6">
-          <label className="form-label small fw-semibold" style={{ color: 'var(--udea-verde-oscuro)' }}>¿Tiene Visión?</label>
-          <div className="p-2 rounded" style={{ background: 'var(--udea-gris-claro)' }}>{radio('vision', value.tieneVision, v => set('tieneVision', v))}</div>
-        </div>
-        <div className="col-md-6">
-          <label className="form-label small fw-semibold" style={{ color: 'var(--udea-verde-oscuro)' }}>Misión</label>
-          <textarea className="form-control form-control-sm" rows={3} placeholder="Escriba la misión..."
-            value={value.mision} onChange={e => set('mision', e.target.value)} disabled={value.tieneMision !== 'si'} />
-        </div>
-        <div className="col-md-6">
-          <label className="form-label small fw-semibold" style={{ color: 'var(--udea-verde-oscuro)' }}>Visión</label>
-          <textarea className="form-control form-control-sm" rows={3} placeholder="Escriba la visión..."
-            value={value.vision} onChange={e => set('vision', e.target.value)} disabled={value.tieneVision !== 'si'} />
-        </div>
       </div>
 
       <div className="mb-3">

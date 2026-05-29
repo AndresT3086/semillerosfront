@@ -150,10 +150,6 @@ export interface ProduccionFormData {
 }
 
 export interface OrganizacionFormData {
-  tieneMision: SiNo;
-  mision: string;
-  tieneVision: SiNo;
-  vision: string;
   recursos: string[];
   fuentes: string[];
 }
