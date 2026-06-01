@@ -1,4 +1,4 @@
-import type { ActividadesFormData, SiNo } from '../../types';
+import type { ActividadFormItem, ActividadesFormData } from '../../types';
 
 interface Props {
   value: ActividadesFormData;
@@ -9,25 +9,27 @@ interface Props {
 }
 
 export default function TabActividades({ value, onChange, onSave, onPrev, saving }: Props) {
-  const set = (field: keyof ActividadesFormData, fieldValue: SiNo) => {
-    onChange({ ...value, [field]: fieldValue });
+  const set = (idActividad: number, realiza: boolean) => {
+    onChange(value.map(item => item.idActividad === idActividad ? { ...item, realiza } : item));
   };
 
-  function RadioRow({ label, selected, onChange }: { label: string; selected: SiNo; onChange: (v: SiNo) => void }) {
+  function RadioRow({ item }: { item: ActividadFormItem }) {
     return (
       <tr>
-        <td className="small py-2 pe-4">{label}</td>
+        <td className="small py-2 pe-4">{item.nombre}</td>
         <td className="text-center" style={{ width: 60 }}>
-          <input type="radio" name={label} checked={selected === 'si'} onChange={() => onChange('si')}
+          <input type="radio" name={`actividad-${item.idActividad}`} checked={item.realiza} onChange={() => set(item.idActividad, true)}
             style={{ accentColor: 'var(--udea-verde-principal)' }} />
         </td>
         <td className="text-center" style={{ width: 60 }}>
-          <input type="radio" name={label} checked={selected === 'no'} onChange={() => onChange('no')}
+          <input type="radio" name={`actividad-${item.idActividad}`} checked={!item.realiza} onChange={() => set(item.idActividad, false)}
             style={{ accentColor: 'var(--udea-verde-principal)' }} />
         </td>
       </tr>
     );
   }
+
+  const categorias = Array.from(new Set(value.map(item => item.categoria || 'Actividades')));
 
   const tableHead = (
     <thead>
@@ -46,35 +48,21 @@ export default function TabActividades({ value, onChange, onSave, onPrev, saving
       </div>
 
       <div className="row g-3 mb-3">
-        <div className="col-md-6">
-          <p className="small fw-semibold mb-2" style={{ color: 'var(--udea-verde-oscuro)' }}>Actividades formativas</p>
-          <div className="table-responsive">
-            <table className="table table-sm table-bordered mb-0" style={{ fontSize: '0.85rem' }}>
-              {tableHead}
-              <tbody>
-                <RadioRow label="Clubes de Revista" selected={value.clubes} onChange={v => set('clubes', v)} />
-                <RadioRow label="Seminarios" selected={value.seminarios} onChange={v => set('seminarios', v)} />
-                <RadioRow label="Salidas de campo" selected={value.salidas} onChange={v => set('salidas', v)} />
-                <RadioRow label="Talleres" selected={value.talleres} onChange={v => set('talleres', v)} />
-                <RadioRow label="Conversatorios" selected={value.conversatorios} onChange={v => set('conversatorios', v)} />
-              </tbody>
-            </table>
+        {categorias.map(categoria => (
+          <div className="col-md-6" key={categoria}>
+            <p className="small fw-semibold mb-2" style={{ color: 'var(--udea-verde-oscuro)' }}>{categoria}</p>
+            <div className="table-responsive">
+              <table className="table table-sm table-bordered mb-0" style={{ fontSize: '0.85rem' }}>
+                {tableHead}
+                <tbody>
+                  {value
+                    .filter(item => (item.categoria || 'Actividades') === categoria)
+                    .map(item => <RadioRow key={item.idActividad} item={item} />)}
+                </tbody>
+              </table>
+            </div>
           </div>
-        </div>
-        <div className="col-md-6">
-          <p className="small fw-semibold mb-2" style={{ color: 'var(--udea-verde-oscuro)' }}>Socialización y difusión</p>
-          <div className="table-responsive">
-            <table className="table table-sm table-bordered mb-0" style={{ fontSize: '0.85rem' }}>
-              {tableHead}
-              <tbody>
-                <RadioRow label="Jornadas Universitarias" selected={value.jornadas} onChange={v => set('jornadas', v)} />
-                <RadioRow label="Eventos RedCOLSI" selected={value.redColsi} onChange={v => set('redColsi', v)} />
-                <RadioRow label="Ponencias Nacionales" selected={value.ponNac} onChange={v => set('ponNac', v)} />
-                <RadioRow label="Ponencias Internacionales" selected={value.ponInt} onChange={v => set('ponInt', v)} />
-              </tbody>
-            </table>
-          </div>
-        </div>
+        ))}
       </div>
 
       <div className="d-flex justify-content-between mt-4 pt-3" style={{ borderTop: '1px solid var(--udea-gris)' }}>

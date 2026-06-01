@@ -1,9 +1,11 @@
 import { useEffect, useState } from 'react';
-import type { FiltroItem, GuardarGeneralPayload, SemilleroCoordinador } from '../../types';
+import type { FiltroItem, GuardarGeneralPayload, PestanaGeneralResponse, SemilleroCoordinador } from '../../types';
 import { getAreasOcde, getCampus, getUnidades } from '../../api/semillerosApi';
 
 interface TabGeneralProps {
   semillero: SemilleroCoordinador;
+  initialData?: PestanaGeneralResponse | null;
+  onDraftChange?: (payload: GuardarGeneralPayload | null) => void;
   onSave: (data: GuardarGeneralPayload) => Promise<void>;
   saving: boolean;
 }
@@ -41,7 +43,7 @@ function FieldErr({ msg }: { msg?: string }) {
   return msg ? <div className="invalid-feedback d-block" style={{ fontSize: '0.78rem' }}>{msg}</div> : null;
 }
 
-export default function TabGeneral({ semillero, onSave, saving }: TabGeneralProps) {
+export default function TabGeneral({ semillero, initialData, onDraftChange, onSave, saving }: TabGeneralProps) {
   const [form, setForm] = useState<GeneralForm>(EMPTY);
   const [errors, setErrors] = useState<Errors>({});
   const [unidades, setUnidades] = useState<FiltroItem[]>([]);
@@ -56,33 +58,62 @@ export default function TabGeneral({ semillero, onSave, saving }: TabGeneralProp
         setUnidades(u);
         setCampus(c);
         setAreas(a);
-        // Pre-populate form with existing semillero data
+        const data = initialData;
         setForm({
-          nombre: semillero.nombre ?? '',
-          siglas: semillero.siglas ?? '',
-          correoSemillero: semillero.correoSemillero ?? '',
-          telefono: semillero.telefono ?? '',
-          anioCreacion: semillero.anioCreacion?.toString() ?? '',
-          mision: semillero.mision ?? '',
-          vision: semillero.vision ?? '',
-          objetivo: semillero.objetivo ?? '',
-          lineasInvestigacion: semillero.lineasInvestigacion ?? '',
-          palabrasClave: semillero.palabrasClave ?? '',
-          grupoInvestigacion: semillero.grupoInvestigacion ?? '',
-          // Match names to IDs since the API only returns names
-          idUnidadAcademica: u.find(x => x.nombre === semillero.facultad)?.id.toString() ?? '',
-          idCampus: c.find(x => x.nombre === semillero.campus)?.id.toString() ?? '',
-          idAreaOcde: a.find(x => x.nombre === semillero.areaOcde)?.id.toString() ?? '',
+          nombre: data?.nombre ?? semillero.nombre ?? '',
+          siglas: data?.siglas ?? semillero.siglas ?? '',
+          correoSemillero: data?.correoSemillero ?? semillero.correoSemillero ?? '',
+          telefono: data?.telefono ?? semillero.telefono ?? '',
+          anioCreacion: (data?.anioCreacion ?? semillero.anioCreacion)?.toString() ?? '',
+          mision: data?.mision ?? semillero.mision ?? '',
+          vision: data?.vision ?? semillero.vision ?? '',
+          objetivo: data?.objetivo ?? semillero.objetivo ?? '',
+          lineasInvestigacion: data?.lineasInvestigacion ?? semillero.lineasInvestigacion ?? '',
+          palabrasClave: data?.palabrasClave ?? semillero.palabrasClave ?? '',
+          grupoInvestigacion: data?.grupoInvestigacion ?? semillero.grupoInvestigacion ?? '',
+          idUnidadAcademica: data?.idUnidadAcademica?.toString() ?? u.find(x => x.nombre === semillero.facultad)?.id.toString() ?? '',
+          idCampus: data?.idCampus?.toString() ?? c.find(x => x.nombre === semillero.campus)?.id.toString() ?? '',
+          idAreaOcde: data?.idAreaOcde?.toString() ?? a.find(x => x.nombre === semillero.areaOcde)?.id.toString() ?? '',
         });
       })
       .catch(() => {})
       .finally(() => setLoadingFiltros(false));
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [initialData, semillero]);
 
   const set = (field: keyof GeneralForm, value: string) => {
     setForm(prev => ({ ...prev, [field]: value }));
     setErrors(prev => ({ ...prev, [field]: undefined }));
   };
+
+  function buildPayload(): GuardarGeneralPayload | null {
+    if (!form.nombre.trim()) return null;
+    if (!form.correoSemillero.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.correoSemillero)) return null;
+    if (!form.mision.trim()) return null;
+    if (!form.vision.trim()) return null;
+    if (!form.objetivo.trim()) return null;
+    if (!form.idUnidadAcademica || !form.idCampus || !form.idAreaOcde) return null;
+
+    return {
+      nombre: form.nombre.trim(),
+      siglas: form.siglas.trim() || undefined,
+      correoSemillero: form.correoSemillero.trim(),
+      telefono: form.telefono.trim() || undefined,
+      anioCreacion: form.anioCreacion ? parseInt(form.anioCreacion) : undefined,
+      mision: form.mision.trim(),
+      vision: form.vision.trim(),
+      objetivo: form.objetivo.trim(),
+      lineasInvestigacion: form.lineasInvestigacion.trim() || undefined,
+      palabrasClave: form.palabrasClave.trim() || undefined,
+      grupoInvestigacion: form.grupoInvestigacion.trim() || undefined,
+      idUnidadAcademica: parseInt(form.idUnidadAcademica),
+      idCampus: parseInt(form.idCampus),
+      idAreaOcde: parseInt(form.idAreaOcde),
+    };
+  }
+
+  useEffect(() => {
+    onDraftChange?.(buildPayload());
+  }, [form]); // eslint-disable-line react-hooks/exhaustive-deps
 
   function validate(): boolean {
     const e: Errors = {};
@@ -101,23 +132,8 @@ export default function TabGeneral({ semillero, onSave, saving }: TabGeneralProp
 
   async function handleSave() {
     if (!validate()) return;
-    const payload: GuardarGeneralPayload = {
-      nombre: form.nombre.trim(),
-      siglas: form.siglas.trim() || undefined,
-      correoSemillero: form.correoSemillero.trim(),
-      telefono: form.telefono.trim() || undefined,
-      anioCreacion: form.anioCreacion ? parseInt(form.anioCreacion) : undefined,
-      mision: form.mision.trim(),
-      vision: form.vision.trim(),
-      objetivo: form.objetivo.trim(),
-      lineasInvestigacion: form.lineasInvestigacion.trim() || undefined,
-      palabrasClave: form.palabrasClave.trim() || undefined,
-      grupoInvestigacion: form.grupoInvestigacion.trim() || undefined,
-      idUnidadAcademica: parseInt(form.idUnidadAcademica),
-      idCampus: parseInt(form.idCampus),
-      idAreaOcde: parseInt(form.idAreaOcde),
-    };
-    await onSave(payload);
+    const payload = buildPayload();
+    if (payload) await onSave(payload);
   }
 
   const fc = (field: keyof GeneralForm) =>

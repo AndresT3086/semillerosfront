@@ -1,9 +1,29 @@
 import { useEffect, useState } from 'react';
-import type { CaracterizacionDraft, GuardarGeneralPayload, SemilleroCoordinador } from '../types';
+import type {
+  CaracterizacionDraft,
+  FiltroItem,
+  GuardarGeneralPayload,
+  PestanaGeneralResponse,
+  SemilleroCoordinador,
+} from '../types';
 import {
   finalizarCaracterizacion,
+  getAreasOcde,
+  getPestanaActividades,
+  getPestanaDofa,
+  getPestanaGeneral,
+  getPestanaOds,
+  getPestanaOrganizacion,
+  getPestanaProduccion,
+  getPestanaRelacionamiento,
   getSemilleroCoordinadorById,
+  guardarPestanaActividades,
+  guardarPestanaDofa,
   guardarPestanaGeneral,
+  guardarPestanaOds,
+  guardarPestanaOrganizacion,
+  guardarPestanaProduccion,
+  guardarPestanaRelacionamiento,
 } from '../api/semillerosApi';
 import TabGeneral from '../components/caracterizacion/TabGeneral';
 import TabProduccion from '../components/caracterizacion/TabProduccion';
@@ -31,7 +51,7 @@ const TABS = [
   { label: 'ODS', icon: '🌍' },
 ];
 
-const DRAFT_VERSION = 1;
+const AUTO_SAVE_INTERVAL_MS = 120000;
 
 const EMPTY_DRAFT: CaracterizacionDraft = {
   produccion: {
@@ -59,17 +79,7 @@ const EMPTY_DRAFT: CaracterizacionDraft = {
     facultad: '',
     relacionFacultad: '',
   },
-  actividades: {
-    clubes: '',
-    seminarios: '',
-    salidas: '',
-    talleres: '',
-    conversatorios: '',
-    jornadas: '',
-    redColsi: '',
-    ponNac: '',
-    ponInt: '',
-  },
+  actividades: [],
   dofa: {
     fortalezas: '',
     debilidades: '',
@@ -84,18 +94,28 @@ const EMPTY_DRAFT: CaracterizacionDraft = {
   },
 };
 
-function draftStorageKey(semilleroId: number) {
-  return `sigsi:caracterizacion:${DRAFT_VERSION}:${semilleroId}`;
+function boolToSiNo(value?: boolean | null) {
+  return value ? 'si' : 'no';
 }
 
-function loadLocalDraft(semilleroId: number): CaracterizacionDraft {
-  try {
-    const raw = window.sessionStorage.getItem(draftStorageKey(semilleroId));
-    if (!raw) return EMPTY_DRAFT;
-    return { ...EMPTY_DRAFT, ...JSON.parse(raw) };
-  } catch {
-    return EMPTY_DRAFT;
-  }
+function siNoToBool(value: string) {
+  return value === 'si';
+}
+
+function num(value: string) {
+  const parsed = Number.parseInt(value, 10);
+  return Number.isFinite(parsed) ? parsed : 0;
+}
+
+function savedTabsFromEstado(estado?: string | null) {
+  if (estado === 'COMPLETO') return new Set(TABS.map((_, index) => index));
+  const markers = estado ? estado.split(',') : [];
+  const tabMarkers = ['GENERAL', 'PRODUCCION', 'ORGANIZACION', 'RELACIONAMIENTO', 'ACTIVIDADES', 'DOFA', 'ODS'];
+  return new Set(tabMarkers.flatMap((marker, index) => markers.includes(`${marker}_COMPLETADO`) ? [index] : []));
+}
+
+function formatSaveTime(date: Date) {
+  return date.toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' });
 }
 
 export default function CaracterizacionPage({
@@ -113,15 +133,27 @@ export default function CaracterizacionPage({
   const [savedTabs, setSavedTabs] = useState<Set<number>>(new Set());
   const [finalizado, setFinalizado] = useState(false);
   const [finalizandoMsg, setFinalizandoMsg] = useState<string | null>(null);
-  const [draft, setDraft] = useState<CaracterizacionDraft>(() => loadLocalDraft(semilleroId));
+  const [draft, setDraft] = useState<CaracterizacionDraft>(EMPTY_DRAFT);
+  const [generalData, setGeneralData] = useState<PestanaGeneralResponse | null>(null);
+  const [generalAutosavePayload, setGeneralAutosavePayload] = useState<GuardarGeneralPayload | null>(null);
+  const [recursos, setRecursos] = useState<FiltroItem[]>([]);
+  const [fuentes, setFuentes] = useState<FiltroItem[]>([]);
+  const [areasOcde, setAreasOcde] = useState<FiltroItem[]>([]);
+  const [autoSaving, setAutoSaving] = useState(false);
+  const [lastAutoSavedAt, setLastAutoSavedAt] = useState<Date | null>(null);
+  const [autoSaveError, setAutoSaveError] = useState<string | null>(null);
 
   useEffect(() => {
     loadSemillero();
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
-    window.sessionStorage.setItem(draftStorageKey(semilleroId), JSON.stringify(draft));
-  }, [draft, semilleroId]);
+    if (!semillero || loading || finalizado) return;
+    const timer = window.setInterval(() => {
+      void autoSaveCurrentTab();
+    }, AUTO_SAVE_INTERVAL_MS);
+    return () => window.clearInterval(timer);
+  }, [activeTab, draft, generalAutosavePayload, semillero, loading, finalizado]); // eslint-disable-line react-hooks/exhaustive-deps
 
   function updateDraft<K extends keyof CaracterizacionDraft>(section: K, value: CaracterizacionDraft[K]) {
     setDraft(prev => ({ ...prev, [section]: value }));
@@ -134,12 +166,74 @@ export default function CaracterizacionPage({
     setFinalizado(false);
     setFinalizandoMsg(null);
     try {
-      const s = await getSemilleroCoordinadorById(semilleroId, token);
+      const [
+        s,
+        general,
+        produccion,
+        organizacion,
+        relacionamiento,
+        actividades,
+        dofa,
+        ods,
+        areas,
+      ] = await Promise.all([
+        getSemilleroCoordinadorById(semilleroId, token),
+        getPestanaGeneral(semilleroId, token),
+        getPestanaProduccion(semilleroId, token),
+        getPestanaOrganizacion(semilleroId, token),
+        getPestanaRelacionamiento(semilleroId, token),
+        getPestanaActividades(semilleroId, token),
+        getPestanaDofa(semilleroId, token),
+        getPestanaOds(semilleroId, token),
+        getAreasOcde(),
+      ]);
       setSemillero(s);
+      setGeneralData(general);
+      setRecursos(organizacion.todosLosRecursos ?? []);
+      setFuentes(organizacion.todasLasFuentes ?? []);
+      setAreasOcde(areas);
+      setDraft({
+        produccion: {
+          tieneArticulos: boolToSiNo(produccion.tienenArticulos),
+          cantArticulos: String(produccion.cantidadArticulos ?? 0),
+          tieneLibros: boolToSiNo(produccion.tienenLibros),
+          cantLibros: String(produccion.cantidadLibros ?? 0),
+          organizaEventos: boolToSiNo(produccion.organizanEventos),
+          cantEventos: String(produccion.cantidadEventos ?? 0),
+          participaEventos: boolToSiNo(produccion.participaEnEventos),
+          cantParticipaciones: String(produccion.cantidadParticipaciones ?? 0),
+        },
+        organizacion: {
+          recursos: (organizacion.recursosSeleccionados ?? []).map(item => item.id),
+          fuentes: (organizacion.fuentesSeleccionadas ?? []).map(item => item.id),
+        },
+        relacionamiento: {
+          adscrito: boolToSiNo(relacionamiento.adscritoGrupo),
+          grupo: relacionamiento.grupoInvestigacion ?? '',
+          relacionGrupo: relacionamiento.relacionGrupo ?? '',
+          centro: relacionamiento.centroInvestigaciones ?? '',
+          relacionCentro: relacionamiento.relacionCentro ?? '',
+          departamento: relacionamiento.departamento ?? '',
+          relacionDept: relacionamiento.relacionDepartamento ?? '',
+          facultad: relacionamiento.facultad ?? '',
+          relacionFacultad: relacionamiento.relacionFacultad ?? '',
+        },
+        actividades: (actividades.actividades ?? []).map(item => ({ ...item, realiza: Boolean(item.realiza) })),
+        dofa: {
+          fortalezas: dofa.fortalezas ?? '',
+          debilidades: dofa.debilidades ?? '',
+          oportunidades: dofa.oportunidades ?? '',
+          amenazas: dofa.amenazas ?? '',
+        },
+        ods: {
+          areaOcde: ods.idAreaOcde?.toString() ?? general.idAreaOcde?.toString() ?? '',
+          subArea: ods.subAreaOcde ?? '',
+          odsPrincipal: ods.idOdsPrincipal?.toString() ?? '',
+          observaciones: ods.observacionesFinales ?? '',
+        },
+      });
       if (s.estadoCaracterizacion === 'COMPLETO') setFinalizado(true);
-      if (s.estadoCaracterizacion && s.estadoCaracterizacion !== 'GENERAL_PENDIENTE') {
-        setSavedTabs(prev => new Set([...prev, 0]));
-      }
+      setSavedTabs(savedTabsFromEstado(s.estadoCaracterizacion ?? general.estadoCaracterizacion));
     } catch (err) {
       setError(err instanceof Error ? err.message : 'No se pudo cargar la caracterización.');
     } finally {
@@ -155,6 +249,7 @@ export default function CaracterizacionPage({
     try {
       const updated = await guardarPestanaGeneral(semillero.id, payload, token);
       setSemillero(updated);
+      setGeneralData(prev => prev ? { ...prev, ...payload } : prev);
       setSavedTabs(prev => new Set([...prev, 0]));
       setActiveTab(1);
     } catch (err) {
@@ -164,23 +259,176 @@ export default function CaracterizacionPage({
     }
   }
 
-  // ── Tabs 1-6 keep a local draft until backend endpoints exist ─────────────
-  async function handleSaveDraft(tabIndex: number) {
+  async function autoSaveCurrentTab() {
+    if (!semillero || saving || autoSaving || finalizado) return;
+    setAutoSaving(true);
+    setAutoSaveError(null);
+    try {
+      const updated = await saveTab(activeTab, { silent: true });
+      if (updated) {
+        setLastAutoSavedAt(new Date());
+      }
+    } catch (err) {
+      setAutoSaveError(err instanceof Error ? err.message : 'No se pudo autoguardar esta pestaña.');
+    } finally {
+      setAutoSaving(false);
+    }
+  }
+
+  async function saveTab(tabIndex: number, options?: { silent?: boolean; advance?: boolean }) {
+    if (!semillero) return null;
+    const silent = options?.silent ?? false;
+    const advance = options?.advance ?? false;
+    let updated: SemilleroCoordinador | null = null;
+
+    if (!silent) setError(null);
+
+    if (tabIndex === 0) {
+      if (!generalAutosavePayload) return null;
+      updated = await guardarPestanaGeneral(semillero.id, generalAutosavePayload, token);
+      setGeneralData(prev => prev ? { ...prev, ...generalAutosavePayload } : prev);
+    }
+
+    if (tabIndex === 1) {
+      updated = await guardarPestanaProduccion(semillero.id, {
+        tienenArticulos: siNoToBool(draft.produccion.tieneArticulos),
+        cantidadArticulos: num(draft.produccion.cantArticulos),
+        tienenLibros: siNoToBool(draft.produccion.tieneLibros),
+        cantidadLibros: num(draft.produccion.cantLibros),
+        organizanEventos: siNoToBool(draft.produccion.organizaEventos),
+        cantidadEventosOrganizados: num(draft.produccion.cantEventos),
+        participaEnEventos: siNoToBool(draft.produccion.participaEventos),
+        cantidadParticipaciones: num(draft.produccion.cantParticipaciones),
+      }, token);
+    }
+
+    if (tabIndex === 2) {
+      updated = await guardarPestanaOrganizacion(semillero.id, {
+        idsRecursos: draft.organizacion.recursos,
+        idsFuentesFinanciacion: draft.organizacion.fuentes,
+      }, token);
+    }
+
+    if (tabIndex === 3) {
+      updated = await guardarPestanaRelacionamiento(semillero.id, {
+        adscritoGrupo: siNoToBool(draft.relacionamiento.adscrito),
+        grupoInvestigacion: draft.relacionamiento.grupo.trim() || undefined,
+        relacionGrupo: draft.relacionamiento.relacionGrupo.trim() || undefined,
+        centroInvestigaciones: draft.relacionamiento.centro.trim() || undefined,
+        relacionCentro: draft.relacionamiento.relacionCentro.trim() || undefined,
+        departamento: draft.relacionamiento.departamento.trim() || undefined,
+        relacionDepartamento: draft.relacionamiento.relacionDept.trim() || undefined,
+        facultad: draft.relacionamiento.facultad.trim() || undefined,
+        relacionFacultad: draft.relacionamiento.relacionFacultad.trim() || undefined,
+      }, token);
+    }
+
+    if (tabIndex === 4) {
+      if (draft.actividades.length === 0) return null;
+      updated = await guardarPestanaActividades(semillero.id, {
+        actividades: draft.actividades.map(item => ({
+          idActividad: item.idActividad,
+          realiza: item.realiza,
+        })),
+      }, token);
+    }
+
+    if (tabIndex === 5) {
+      updated = await guardarPestanaDofa(semillero.id, draft.dofa, token);
+    }
+
+    if (tabIndex === 6) {
+      const idAreaOcde = Number.parseInt(draft.ods.areaOcde, 10);
+      const idOdsPrincipal = Number.parseInt(draft.ods.odsPrincipal, 10);
+      if (!Number.isFinite(idAreaOcde) || !Number.isFinite(idOdsPrincipal)) return null;
+      updated = await guardarPestanaOds(semillero.id, {
+        idAreaOcde,
+        subAreaOcde: draft.ods.subArea.trim() || undefined,
+        idOdsPrincipal,
+        observacionesFinales: draft.ods.observaciones.trim() || undefined,
+      }, token);
+    }
+
+    if (!updated) return null;
+    setSemillero(updated);
+    setSavedTabs(prev => new Set([...prev, tabIndex]));
+    if (advance && tabIndex < TABS.length - 1) setActiveTab(tabIndex + 1);
+    return updated;
+  }
+
+  async function handleSaveProduccion() {
+    if (!semillero) return;
     setSaving(true);
     setError(null);
     try {
-      setSavedTabs(prev => new Set([...prev, tabIndex]));
-      setActiveTab(tabIndex + 1);
+      await saveTab(1, { advance: true });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Error al guardar Producción.');
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function handleSaveOrganizacion() {
+    if (!semillero) return;
+    setSaving(true);
+    setError(null);
+    try {
+      await saveTab(2, { advance: true });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Error al guardar Organización.');
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function handleSaveRelacionamiento() {
+    if (!semillero) return;
+    setSaving(true);
+    setError(null);
+    try {
+      await saveTab(3, { advance: true });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Error al guardar Relacionamiento.');
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function handleSaveActividades() {
+    if (!semillero) return;
+    setSaving(true);
+    setError(null);
+    try {
+      await saveTab(4, { advance: true });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Error al guardar Actividades.');
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function handleSaveDofa() {
+    if (!semillero) return;
+    setSaving(true);
+    setError(null);
+    try {
+      await saveTab(5, { advance: true });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Error al guardar DOFA.');
     } finally {
       setSaving(false);
     }
   }
 
   async function handleSaveOds() {
+    if (!semillero) return;
     setSaving(true);
     setError(null);
     try {
-      setSavedTabs(prev => new Set([...prev, 6]));
+      await saveTab(6);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Error al guardar ODS.');
     } finally {
       setSaving(false);
     }
@@ -265,8 +513,25 @@ export default function CaracterizacionPage({
 
         {/* Error global */}
         {error && (
-          <div className="alert alert-danger py-2 small mb-3">
+          <div className="alert alert-danger alert-dismissible fade show py-2 small mb-3" role="alert">
             <i className="bi bi-exclamation-triangle me-2"></i>{error}
+            <button type="button" className="btn-close" aria-label="Cerrar" onClick={() => setError(null)}></button>
+          </div>
+        )}
+
+        {(autoSaving || lastAutoSavedAt || autoSaveError) && (
+          <div className="d-flex justify-content-end mb-2">
+            <div className="small px-2 py-1 rounded"
+              style={{ background: 'rgba(0, 181, 173, 0.10)', color: autoSaveError ? '#9b2c2c' : 'var(--udea-verde-oscuro)' }}>
+              {autoSaving && (
+                <>
+                  <span className="spinner-border spinner-border-sm me-2" style={{ width: 12, height: 12 }}></span>
+                  Autoguardando...
+                </>
+              )}
+              {!autoSaving && autoSaveError && <>Autoguardado pendiente: {autoSaveError}</>}
+              {!autoSaving && !autoSaveError && lastAutoSavedAt && <>Autoguardado a las {formatSaveTime(lastAutoSavedAt)}</>}
+            </div>
           </div>
         )}
 
@@ -325,13 +590,19 @@ export default function CaracterizacionPage({
           {/* Tab content */}
           <div className="p-4">
             {activeTab === 0 && (
-              <TabGeneral semillero={semillero} onSave={handleSaveGeneral} saving={saving} />
+              <TabGeneral
+                semillero={semillero}
+                initialData={generalData}
+                onDraftChange={setGeneralAutosavePayload}
+                onSave={handleSaveGeneral}
+                saving={saving}
+              />
             )}
             {activeTab === 1 && (
               <TabProduccion
                 value={draft.produccion}
                 onChange={value => updateDraft('produccion', value)}
-                onSave={() => handleSaveDraft(1)}
+                onSave={handleSaveProduccion}
                 onPrev={() => setActiveTab(0)}
                 saving={saving}
               />
@@ -339,8 +610,10 @@ export default function CaracterizacionPage({
             {activeTab === 2 && (
               <TabOrganizacion
                 value={draft.organizacion}
+                recursos={recursos}
+                fuentes={fuentes}
                 onChange={value => updateDraft('organizacion', value)}
-                onSave={() => handleSaveDraft(2)}
+                onSave={handleSaveOrganizacion}
                 onPrev={() => setActiveTab(1)}
                 saving={saving}
               />
@@ -349,7 +622,7 @@ export default function CaracterizacionPage({
               <TabRelacionamiento
                 value={draft.relacionamiento}
                 onChange={value => updateDraft('relacionamiento', value)}
-                onSave={() => handleSaveDraft(3)}
+                onSave={handleSaveRelacionamiento}
                 onPrev={() => setActiveTab(2)}
                 saving={saving}
               />
@@ -358,7 +631,7 @@ export default function CaracterizacionPage({
               <TabActividades
                 value={draft.actividades}
                 onChange={value => updateDraft('actividades', value)}
-                onSave={() => handleSaveDraft(4)}
+                onSave={handleSaveActividades}
                 onPrev={() => setActiveTab(3)}
                 saving={saving}
               />
@@ -367,7 +640,7 @@ export default function CaracterizacionPage({
               <TabDofa
                 value={draft.dofa}
                 onChange={value => updateDraft('dofa', value)}
-                onSave={() => handleSaveDraft(5)}
+                onSave={handleSaveDofa}
                 onPrev={() => setActiveTab(4)}
                 saving={saving}
               />
@@ -375,6 +648,7 @@ export default function CaracterizacionPage({
             {activeTab === 6 && (
               <TabOds
                 value={draft.ods}
+                areas={areasOcde}
                 onChange={value => updateDraft('ods', value)}
                 onSave={handleSaveOds}
                 onPrev={() => setActiveTab(5)}

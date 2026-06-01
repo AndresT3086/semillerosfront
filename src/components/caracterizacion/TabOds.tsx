@@ -1,7 +1,8 @@
-import type { OdsFormData } from '../../types';
+import type { FiltroItem, OdsFormData } from '../../types';
 
 interface Props {
   value: OdsFormData;
+  areas: FiltroItem[];
   onChange: (value: OdsFormData) => void;
   onSave: () => void;
   onPrev: () => void;
@@ -31,10 +32,7 @@ const ODS_LIST = [
   { id: 17, label: '17. Alianzas para lograr los objetivos' },
 ];
 
-const AREAS_OCDE = ['Ciencias Naturales', 'Ingeniería y Tecnología', 'Ciencias Médicas y de la Salud',
-  'Ciencias Agrícolas', 'Ciencias Sociales', 'Humanidades'];
-
-export default function TabOds({ value, onChange, onSave, onPrev, saving, onFinalizar, canFinalizar, finalizado }: Props) {
+export default function TabOds({ value, areas, onChange, onSave, onPrev, saving, onFinalizar, canFinalizar, finalizado }: Props) {
   const set = (field: keyof OdsFormData, fieldValue: string) => {
     onChange({ ...value, [field]: fieldValue });
   };
@@ -52,7 +50,7 @@ export default function TabOds({ value, onChange, onSave, onPrev, saving, onFina
           </label>
           <select className="form-select form-select-sm" value={value.areaOcde} onChange={e => set('areaOcde', e.target.value)}>
             <option value="">Seleccione...</option>
-            {AREAS_OCDE.map(a => <option key={a} value={a}>{a}</option>)}
+            {areas.map(a => <option key={a.id} value={String(a.id)}>{a.nombre}</option>)}
           </select>
         </div>
         <div className="col-md-4">

@@ -2,10 +2,23 @@ import type {
   CaptchaResponse,
   FiltroItem,
   FilterValues,
+  GuardarActividadesPayload,
+  GuardarDofaPayload,
   GuardarGeneralPayload,
+  GuardarOdsPayload,
+  GuardarOrganizacionPayload,
+  GuardarProduccionPayload,
+  GuardarRelacionamientoPayload,
   InscripcionFormData,
   LoginResponse,
   PageResponse,
+  PestanaActividadesResponse,
+  PestanaDofaResponse,
+  PestanaGeneralResponse,
+  PestanaOdsResponse,
+  PestanaOrganizacionResponse,
+  PestanaProduccionResponse,
+  PestanaRelacionamientoResponse,
   SemilleroCoordinador,
   SemilleroDetalle,
   SemilleroResumen,
@@ -129,6 +142,166 @@ export async function guardarPestanaGeneral(
 ): Promise<SemilleroCoordinador> {
   return apiFetch<SemilleroCoordinador>(
     `/api/v1/coordinador/semilleros/${idSemillero}/pestana/general`,
+    {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json', ...authHeaders(token) },
+      body: JSON.stringify(payload),
+    },
+  );
+}
+
+export async function getPestanaGeneral(
+  idSemillero: number,
+  token: string,
+): Promise<PestanaGeneralResponse> {
+  return apiFetch<PestanaGeneralResponse>(
+    `/api/v1/coordinador/semilleros/${idSemillero}/pestana/general`,
+    { headers: authHeaders(token) },
+  );
+}
+
+export async function getPestanaProduccion(
+  idSemillero: number,
+  token: string,
+): Promise<PestanaProduccionResponse> {
+  return apiFetch<PestanaProduccionResponse>(
+    `/api/v1/coordinador/semilleros/${idSemillero}/pestana/produccion`,
+    { headers: authHeaders(token) },
+  );
+}
+
+export async function guardarPestanaProduccion(
+  idSemillero: number,
+  payload: GuardarProduccionPayload,
+  token: string,
+): Promise<SemilleroCoordinador> {
+  return apiFetch<SemilleroCoordinador>(
+    `/api/v1/coordinador/semilleros/${idSemillero}/pestana/produccion`,
+    {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json', ...authHeaders(token) },
+      body: JSON.stringify(payload),
+    },
+  );
+}
+
+export async function getPestanaOrganizacion(
+  idSemillero: number,
+  token: string,
+): Promise<PestanaOrganizacionResponse> {
+  return apiFetch<PestanaOrganizacionResponse>(
+    `/api/v1/coordinador/semilleros/${idSemillero}/pestana/organizacion`,
+    { headers: authHeaders(token) },
+  );
+}
+
+export async function guardarPestanaOrganizacion(
+  idSemillero: number,
+  payload: GuardarOrganizacionPayload,
+  token: string,
+): Promise<SemilleroCoordinador> {
+  return apiFetch<SemilleroCoordinador>(
+    `/api/v1/coordinador/semilleros/${idSemillero}/pestana/organizacion`,
+    {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json', ...authHeaders(token) },
+      body: JSON.stringify(payload),
+    },
+  );
+}
+
+export async function getPestanaRelacionamiento(
+  idSemillero: number,
+  token: string,
+): Promise<PestanaRelacionamientoResponse> {
+  return apiFetch<PestanaRelacionamientoResponse>(
+    `/api/v1/coordinador/semilleros/${idSemillero}/pestana/relacionamiento`,
+    { headers: authHeaders(token) },
+  );
+}
+
+export async function guardarPestanaRelacionamiento(
+  idSemillero: number,
+  payload: GuardarRelacionamientoPayload,
+  token: string,
+): Promise<SemilleroCoordinador> {
+  return apiFetch<SemilleroCoordinador>(
+    `/api/v1/coordinador/semilleros/${idSemillero}/pestana/relacionamiento`,
+    {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json', ...authHeaders(token) },
+      body: JSON.stringify(payload),
+    },
+  );
+}
+
+export async function getPestanaActividades(
+  idSemillero: number,
+  token: string,
+): Promise<PestanaActividadesResponse> {
+  return apiFetch<PestanaActividadesResponse>(
+    `/api/v1/coordinador/semilleros/${idSemillero}/pestana/actividades`,
+    { headers: authHeaders(token) },
+  );
+}
+
+export async function guardarPestanaActividades(
+  idSemillero: number,
+  payload: GuardarActividadesPayload,
+  token: string,
+): Promise<SemilleroCoordinador> {
+  return apiFetch<SemilleroCoordinador>(
+    `/api/v1/coordinador/semilleros/${idSemillero}/pestana/actividades`,
+    {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json', ...authHeaders(token) },
+      body: JSON.stringify(payload),
+    },
+  );
+}
+
+export async function getPestanaDofa(
+  idSemillero: number,
+  token: string,
+): Promise<PestanaDofaResponse> {
+  return apiFetch<PestanaDofaResponse>(
+    `/api/v1/coordinador/semilleros/${idSemillero}/pestana/dofa`,
+    { headers: authHeaders(token) },
+  );
+}
+
+export async function guardarPestanaDofa(
+  idSemillero: number,
+  payload: GuardarDofaPayload,
+  token: string,
+): Promise<SemilleroCoordinador> {
+  return apiFetch<SemilleroCoordinador>(
+    `/api/v1/coordinador/semilleros/${idSemillero}/pestana/dofa`,
+    {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json', ...authHeaders(token) },
+      body: JSON.stringify(payload),
+    },
+  );
+}
+
+export async function getPestanaOds(
+  idSemillero: number,
+  token: string,
+): Promise<PestanaOdsResponse> {
+  return apiFetch<PestanaOdsResponse>(
+    `/api/v1/coordinador/semilleros/${idSemillero}/pestana/ods`,
+    { headers: authHeaders(token) },
+  );
+}
+
+export async function guardarPestanaOds(
+  idSemillero: number,
+  payload: GuardarOdsPayload,
+  token: string,
+): Promise<SemilleroCoordinador> {
+  return apiFetch<SemilleroCoordinador>(
+    `/api/v1/coordinador/semilleros/${idSemillero}/pestana/ods`,
     {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json', ...authHeaders(token) },

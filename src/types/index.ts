@@ -138,6 +138,15 @@ export interface GuardarGeneralPayload {
 
 export type SiNo = 'si' | 'no' | '';
 
+export interface PestanaGeneralResponse extends GuardarGeneralPayload {
+  id: number;
+  codigo: string;
+  nombreUnidad: string | null;
+  nombreCampus: string | null;
+  nombreAreaOcde: string | null;
+  estadoCaracterizacion: string | null;
+}
+
 export interface ProduccionFormData {
   tieneArticulos: SiNo;
   cantArticulos: string;
@@ -149,9 +158,43 @@ export interface ProduccionFormData {
   cantParticipaciones: string;
 }
 
+export interface GuardarProduccionPayload {
+  tienenArticulos: boolean;
+  cantidadArticulos: number;
+  tienenLibros: boolean;
+  cantidadLibros: number;
+  organizanEventos: boolean;
+  cantidadEventosOrganizados: number;
+  participaEnEventos: boolean;
+  cantidadParticipaciones: number;
+}
+
+export interface PestanaProduccionResponse {
+  tienenArticulos: boolean | null;
+  cantidadArticulos: number | null;
+  tienenLibros: boolean | null;
+  cantidadLibros: number | null;
+  organizanEventos: boolean | null;
+  cantidadEventos: number | null;
+  participaEnEventos: boolean | null;
+  cantidadParticipaciones: number | null;
+}
+
 export interface OrganizacionFormData {
-  recursos: string[];
-  fuentes: string[];
+  recursos: number[];
+  fuentes: number[];
+}
+
+export interface PestanaOrganizacionResponse {
+  recursosSeleccionados: FiltroItem[];
+  fuentesSeleccionadas: FiltroItem[];
+  todosLosRecursos: FiltroItem[];
+  todasLasFuentes: FiltroItem[];
+}
+
+export interface GuardarOrganizacionPayload {
+  idsRecursos: number[];
+  idsFuentesFinanciacion: number[];
 }
 
 export interface RelacionamientoFormData {
@@ -166,16 +209,38 @@ export interface RelacionamientoFormData {
   relacionFacultad: string;
 }
 
-export interface ActividadesFormData {
-  clubes: SiNo;
-  seminarios: SiNo;
-  salidas: SiNo;
-  talleres: SiNo;
-  conversatorios: SiNo;
-  jornadas: SiNo;
-  redColsi: SiNo;
-  ponNac: SiNo;
-  ponInt: SiNo;
+export interface GuardarRelacionamientoPayload {
+  adscritoGrupo: boolean;
+  grupoInvestigacion?: string;
+  relacionGrupo?: string;
+  centroInvestigaciones?: string;
+  relacionCentro?: string;
+  departamento?: string;
+  relacionDepartamento?: string;
+  facultad?: string;
+  relacionFacultad?: string;
+}
+
+export interface PestanaRelacionamientoResponse extends GuardarRelacionamientoPayload {}
+
+export interface ActividadFormItem {
+  idActividad: number;
+  nombre: string;
+  categoria: string;
+  realiza: boolean;
+}
+
+export type ActividadesFormData = ActividadFormItem[];
+
+export interface GuardarActividadesPayload {
+  actividades: Array<{
+    idActividad: number;
+    realiza: boolean;
+  }>;
+}
+
+export interface PestanaActividadesResponse {
+  actividades: ActividadFormItem[];
 }
 
 export interface DofaFormData {
@@ -185,11 +250,30 @@ export interface DofaFormData {
   amenazas: string;
 }
 
+export interface GuardarDofaPayload extends DofaFormData {}
+export interface PestanaDofaResponse extends DofaFormData {}
+
 export interface OdsFormData {
   areaOcde: string;
   subArea: string;
   odsPrincipal: string;
   observaciones: string;
+}
+
+export interface GuardarOdsPayload {
+  idAreaOcde: number;
+  subAreaOcde?: string;
+  idOdsPrincipal: number;
+  observacionesFinales?: string;
+}
+
+export interface PestanaOdsResponse {
+  idAreaOcde: number | null;
+  nombreAreaOcde: string | null;
+  subAreaOcde: string | null;
+  idOdsPrincipal: number | null;
+  nombreOdsPrincipal: string | null;
+  observacionesFinales: string | null;
 }
 
 export interface CaracterizacionDraft {

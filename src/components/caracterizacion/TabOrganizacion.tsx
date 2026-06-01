@@ -1,26 +1,21 @@
-import type { OrganizacionFormData } from '../../types';
+import type { FiltroItem, OrganizacionFormData } from '../../types';
 
 interface Props {
   value: OrganizacionFormData;
+  recursos: FiltroItem[];
+  fuentes: FiltroItem[];
   onChange: (value: OrganizacionFormData) => void;
   onSave: () => void;
   onPrev: () => void;
   saving: boolean;
 }
 
-const RECURSOS = ['Laboratorio', 'Sala de cómputo', 'Espacio físico propio', 'Biblioteca / Bases de datos',
-  'Equipos de medición', 'Software especializado', 'Semillero virtual / plataforma digital', 'Ninguno'];
-
-const FUENTES = ['Recursos propios de la universidad', 'Convocatoria interna UdeA', 'Minciencias',
-  'Gobernación de Antioquia', 'Alcaldía', 'Empresa privada', 'Cooperación internacional', 'ONG',
-  'Sin financiación', 'Otra'];
-
-export default function TabOrganizacion({ value, onChange, onSave, onPrev, saving }: Props) {
-  const set = (field: keyof OrganizacionFormData, fieldValue: string[]) => {
+export default function TabOrganizacion({ value, recursos, fuentes, onChange, onSave, onPrev, saving }: Props) {
+  const set = (field: keyof OrganizacionFormData, fieldValue: number[]) => {
     onChange({ ...value, [field]: fieldValue });
   };
 
-  function toggleCheck(list: string[], item: string, field: 'recursos' | 'fuentes') {
+  function toggleCheck(list: number[], item: number, field: 'recursos' | 'fuentes') {
     set(field, list.includes(item) ? list.filter(x => x !== item) : [...list, item]);
   }
 
@@ -33,11 +28,11 @@ export default function TabOrganizacion({ value, onChange, onSave, onPrev, savin
       <div className="mb-3">
         <label className="form-label small fw-semibold" style={{ color: 'var(--udea-verde-oscuro)' }}>Recursos con que cuenta</label>
         <div className="p-2 rounded" style={{ background: 'var(--udea-gris-claro)', display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '4px 16px' }}>
-          {RECURSOS.map(r => (
-            <label key={r} className="d-flex align-items-center gap-2 small" style={{ cursor: 'pointer' }}>
-              <input type="checkbox" checked={value.recursos.includes(r)} onChange={() => toggleCheck(value.recursos, r, 'recursos')}
+          {recursos.map(r => (
+            <label key={r.id} className="d-flex align-items-center gap-2 small" style={{ cursor: 'pointer' }}>
+              <input type="checkbox" checked={value.recursos.includes(r.id)} onChange={() => toggleCheck(value.recursos, r.id, 'recursos')}
                 style={{ accentColor: 'var(--udea-verde-principal)' }} />
-              {r}
+              {r.nombre}
             </label>
           ))}
         </div>
@@ -46,11 +41,11 @@ export default function TabOrganizacion({ value, onChange, onSave, onPrev, savin
       <div className="mb-3">
         <label className="form-label small fw-semibold" style={{ color: 'var(--udea-verde-oscuro)' }}>Fuentes de financiación</label>
         <div className="p-2 rounded" style={{ background: 'var(--udea-gris-claro)', display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '4px 16px' }}>
-          {FUENTES.map(f => (
-            <label key={f} className="d-flex align-items-center gap-2 small" style={{ cursor: 'pointer' }}>
-              <input type="checkbox" checked={value.fuentes.includes(f)} onChange={() => toggleCheck(value.fuentes, f, 'fuentes')}
+          {fuentes.map(f => (
+            <label key={f.id} className="d-flex align-items-center gap-2 small" style={{ cursor: 'pointer' }}>
+              <input type="checkbox" checked={value.fuentes.includes(f.id)} onChange={() => toggleCheck(value.fuentes, f.id, 'fuentes')}
                 style={{ accentColor: 'var(--udea-verde-principal)' }} />
-              {f}
+              {f.nombre}
             </label>
           ))}
         </div>
