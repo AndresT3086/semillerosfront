@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { Modal } from 'bootstrap';
+import { Modal } from 'bootstrap/dist/js/bootstrap.bundle';
 import type { SemilleroDetalle } from '../types';
 import { getSemilleroById } from '../api/semillerosApi';
 

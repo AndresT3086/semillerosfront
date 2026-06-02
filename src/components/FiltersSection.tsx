@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { Tooltip } from 'bootstrap';
+import { Tooltip } from 'bootstrap/dist/js/bootstrap.bundle';
 import type { FilterValues, FiltroItem } from '../types';
 import { getUnidades, getCampus, getAreasOcde } from '../api/semillerosApi';
 

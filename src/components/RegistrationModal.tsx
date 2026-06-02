@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { Modal } from 'bootstrap';
+import { Modal } from 'bootstrap/dist/js/bootstrap.bundle';
 import type { InscripcionFormData, InscripcionFormErrors } from '../types';
 import { submitInscripcion } from '../api/semillerosApi';
 
@@ -111,8 +111,8 @@ export default function RegistrationModal({
     if (!form.apellidos.trim()) newErrors.apellidos = 'Campo requerido';
     if (!form.cedula.trim() || !/^\d{7,10}$/.test(form.cedula))
       newErrors.cedula = 'Ingrese una cédula válida (7-10 dígitos)';
-    if (!form.correo.trim() || !form.correo.endsWith('@udea.edu.co'))
-      newErrors.correo = 'Debe ser un correo institucional @udea.edu.co';
+    if (!form.correo.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.correo))
+      newErrors.correo = 'Ingrese un correo electrónico válido';
     if (!form.telefono.trim() || !/^\d{10}$/.test(form.telefono))
       newErrors.telefono = 'Ingrese un teléfono válido (10 dígitos)';
     if (!form.programa.trim()) newErrors.programa = 'Campo requerido';
@@ -257,15 +257,15 @@ export default function RegistrationModal({
                     </div>
 
                     <div className="col-md-6 mb-3">
-                      <label className="form-label">Correo institucional *</label>
+                      <label className="form-label">Correo electrónico *</label>
                       <input
                         type="email"
                         className={fieldClass('correo')}
-                        placeholder="usuario@udea.edu.co"
+                        placeholder="usuario@correo.com"
                         value={form.correo}
                         onChange={(e) => set('correo', e.target.value)}
                       />
-                      <small className="form-text text-muted">Debe ser correo institucional</small>
+                      <small className="form-text text-muted">Usaremos este correo para contactarte sobre la solicitud</small>
                       {errors.correo && (
                         <div className="invalid-feedback d-block">{errors.correo}</div>
                       )}
