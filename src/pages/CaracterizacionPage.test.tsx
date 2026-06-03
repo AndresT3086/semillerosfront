@@ -178,18 +178,17 @@ describe('CaracterizacionPage', () => {
   });
 
   it('permite cerrar un error global de guardado', async () => {
-    vi.mocked(api.guardarPestanaOrganizacion).mockRejectedValue(new Error('Debe indicar al menos un recurso'));
     renderPage();
 
     await screen.findByText('SEM-UDEA-0001');
     fireEvent.click(screen.getAllByRole('button', { name: /Organización/i })[0]);
     fireEvent.click(screen.getByRole('button', { name: /Guardar y Continuar/i }));
 
-    expect(await screen.findByText('Debe indicar al menos un recurso')).toBeInTheDocument();
+    expect(await screen.findByText('Seleccione al menos un recurso o la opción Ninguna.')).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'Cerrar' }));
 
     await waitFor(() => {
-      expect(screen.queryByText('Debe indicar al menos un recurso')).not.toBeInTheDocument();
+      expect(screen.queryByText('Seleccione al menos un recurso o la opción Ninguna.')).not.toBeInTheDocument();
     });
   });
 });

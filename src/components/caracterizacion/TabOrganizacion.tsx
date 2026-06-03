@@ -26,7 +26,9 @@ export default function TabOrganizacion({ value, recursos, fuentes, onChange, on
       </div>
 
       <div className="mb-3">
-        <label className="form-label small fw-semibold" style={{ color: 'var(--udea-verde-oscuro)' }}>Recursos con que cuenta</label>
+        <label className="form-label small fw-semibold" style={{ color: 'var(--udea-verde-oscuro)' }}>
+          Recursos con que cuenta *
+        </label>
         <div className="p-2 rounded" style={{ background: 'var(--udea-gris-claro)', display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '4px 16px' }}>
           {recursos.map(r => (
             <label key={r.id} className="d-flex align-items-center gap-2 small" style={{ cursor: 'pointer' }}>
@@ -36,10 +38,13 @@ export default function TabOrganizacion({ value, recursos, fuentes, onChange, on
             </label>
           ))}
         </div>
+        <small className="text-muted">Seleccione al menos uno. Si no aplica, use la opción Ninguna.</small>
       </div>
 
       <div className="mb-3">
-        <label className="form-label small fw-semibold" style={{ color: 'var(--udea-verde-oscuro)' }}>Fuentes de financiación</label>
+        <label className="form-label small fw-semibold" style={{ color: 'var(--udea-verde-oscuro)' }}>
+          Fuentes de financiación *
+        </label>
         <div className="p-2 rounded" style={{ background: 'var(--udea-gris-claro)', display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '4px 16px' }}>
           {fuentes.map(f => (
             <label key={f.id} className="d-flex align-items-center gap-2 small" style={{ cursor: 'pointer' }}>
@@ -49,6 +54,7 @@ export default function TabOrganizacion({ value, recursos, fuentes, onChange, on
             </label>
           ))}
         </div>
+        <small className="text-muted">Seleccione al menos una. Si no aplica, use la opción Sin financiación.</small>
       </div>
 
       <div className="d-flex justify-content-between mt-4 pt-3" style={{ borderTop: '1px solid var(--udea-gris)' }}>

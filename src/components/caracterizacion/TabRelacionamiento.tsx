@@ -13,6 +13,17 @@ export default function TabRelacionamiento({ value, onChange, onSave, onPrev, sa
     onChange({ ...value, [field]: fieldValue });
   };
 
+  const setAdscrito = (fieldValue: string) => {
+    onChange({
+      ...value,
+      adscrito: fieldValue as RelacionamientoFormData['adscrito'],
+      grupo: fieldValue === 'si' ? value.grupo : '',
+      relacionGrupo: fieldValue === 'si' ? value.relacionGrupo : '',
+    });
+  };
+
+  const adscritoGrupo = value.adscrito === 'si';
+
   return (
     <div>
       <div className="p-2 rounded mb-3 fw-semibold text-white small" style={{ background: 'linear-gradient(135deg, var(--udea-verde-principal), var(--udea-verde-oscuro))' }}>
@@ -27,21 +38,27 @@ export default function TabRelacionamiento({ value, onChange, onSave, onPrev, sa
             {['si', 'no'].map(v => (
               <label key={v} className="d-flex align-items-center gap-1 small" style={{ cursor: 'pointer' }}>
                 <input type="radio" name="adscrito" value={v} checked={value.adscrito === v}
-                  onChange={() => set('adscrito', v)} style={{ accentColor: 'var(--udea-verde-principal)' }} />
+                  onChange={() => setAdscrito(v)} style={{ accentColor: 'var(--udea-verde-principal)' }} />
                 {v === 'si' ? 'Sí' : 'No'}
               </label>
             ))}
           </div>
         </div>
         <div className="col-md-4">
-          <label className="form-label small fw-semibold" style={{ color: 'var(--udea-verde-oscuro)' }}>Grupo de investigación</label>
+          <label className="form-label small fw-semibold" style={{ color: 'var(--udea-verde-oscuro)' }}>
+            Grupo de investigación {adscritoGrupo ? '*' : ''}
+          </label>
           <input type="text" className="form-control form-control-sm" placeholder="Nombre o código del grupo"
-            value={value.grupo} onChange={e => set('grupo', e.target.value)} disabled={value.adscrito !== 'si'} />
+            value={value.grupo} onChange={e => set('grupo', e.target.value)} disabled={!adscritoGrupo} />
+          {!adscritoGrupo && <small className="text-muted">Se habilita cuando el semillero está adscrito a un grupo.</small>}
         </div>
         <div className="col-md-4">
-          <label className="form-label small fw-semibold" style={{ color: 'var(--udea-verde-oscuro)' }}>Relación con el grupo</label>
+          <label className="form-label small fw-semibold" style={{ color: 'var(--udea-verde-oscuro)' }}>
+            Relación con el grupo {adscritoGrupo ? '*' : ''}
+          </label>
           <input type="text" className="form-control form-control-sm" placeholder="Ej. Reuniones mensuales"
-            value={value.relacionGrupo} onChange={e => set('relacionGrupo', e.target.value)} disabled={value.adscrito !== 'si'} />
+            value={value.relacionGrupo} onChange={e => set('relacionGrupo', e.target.value)} disabled={!adscritoGrupo} />
+          {!adscritoGrupo && <small className="text-muted">No aplica cuando no hay adscripción a grupo.</small>}
         </div>
       </div>
 
@@ -54,7 +71,7 @@ export default function TabRelacionamiento({ value, onChange, onSave, onPrev, sa
         </div>
         <div className="col-md-4">
           <label className="form-label small fw-semibold" style={{ color: 'var(--udea-verde-oscuro)' }}>Relación con el centro</label>
-          <input type="text" className="form-control form-control-sm" placeholder="NE"
+          <input type="text" className="form-control form-control-sm" placeholder="No aplica"
             value={value.relacionCentro} onChange={e => set('relacionCentro', e.target.value)} />
         </div>
         <div className="col-md-4">
@@ -68,7 +85,7 @@ export default function TabRelacionamiento({ value, onChange, onSave, onPrev, sa
       <div className="row g-3 mb-3">
         <div className="col-md-4">
           <label className="form-label small fw-semibold" style={{ color: 'var(--udea-verde-oscuro)' }}>Relación con el departamento</label>
-          <input type="text" className="form-control form-control-sm" placeholder="NE"
+          <input type="text" className="form-control form-control-sm" placeholder="No aplica"
             value={value.relacionDept} onChange={e => set('relacionDept', e.target.value)} />
         </div>
         <div className="col-md-4">
@@ -78,7 +95,7 @@ export default function TabRelacionamiento({ value, onChange, onSave, onPrev, sa
         </div>
         <div className="col-md-4">
           <label className="form-label small fw-semibold" style={{ color: 'var(--udea-verde-oscuro)' }}>Relación con la facultad</label>
-          <input type="text" className="form-control form-control-sm" placeholder="NE"
+          <input type="text" className="form-control form-control-sm" placeholder="No aplica"
             value={value.relacionFacultad} onChange={e => set('relacionFacultad', e.target.value)} />
         </div>
       </div>

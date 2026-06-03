@@ -32,7 +32,10 @@ async function apiFetch<T>(path: string, options?: RequestInit): Promise<T> {
   const res = await fetch(`${BASE_URL}${path}`, options);
   if (!res.ok) {
     const body = await res.json().catch(() => ({}));
-    throw new Error(body.mensaje ?? `Error ${res.status}`);
+    const validationMessages = body.datos && typeof body.datos === 'object'
+      ? Object.values(body.datos).filter((value): value is string => typeof value === 'string')
+      : [];
+    throw new Error(validationMessages.length > 0 ? validationMessages.join(' ') : body.mensaje ?? `Error ${res.status}`);
   }
   const json = await res.json();
   return json.datos ?? json;

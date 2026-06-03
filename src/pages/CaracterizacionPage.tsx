@@ -371,6 +371,14 @@ export default function CaracterizacionPage({
 
   async function handleSaveOrganizacion() {
     if (!semillero) return;
+    if (draft.organizacion.recursos.length === 0) {
+      setError('Seleccione al menos un recurso o la opción Ninguna.');
+      return;
+    }
+    if (draft.organizacion.fuentes.length === 0) {
+      setError('Seleccione al menos una fuente de financiación o la opción Sin financiación.');
+      return;
+    }
     setSaving(true);
     setError(null);
     try {
@@ -384,6 +392,14 @@ export default function CaracterizacionPage({
 
   async function handleSaveRelacionamiento() {
     if (!semillero) return;
+    if (draft.relacionamiento.adscrito === 'si' && !draft.relacionamiento.grupo.trim()) {
+      setError('Indique el grupo de investigación al que está adscrito el semillero.');
+      return;
+    }
+    if (draft.relacionamiento.adscrito === 'si' && !draft.relacionamiento.relacionGrupo.trim()) {
+      setError('Indique la relación del semillero con el grupo de investigación.');
+      return;
+    }
     setSaving(true);
     setError(null);
     try {
@@ -410,6 +426,16 @@ export default function CaracterizacionPage({
 
   async function handleSaveDofa() {
     if (!semillero) return;
+    const faltantes = [
+      ['fortalezas', draft.dofa.fortalezas],
+      ['debilidades', draft.dofa.debilidades],
+      ['oportunidades', draft.dofa.oportunidades],
+      ['amenazas', draft.dofa.amenazas],
+    ].filter(([, value]) => !String(value).trim());
+    if (faltantes.length > 0) {
+      setError('Completa las cuatro áreas del análisis DOFA: fortalezas, debilidades, oportunidades y amenazas.');
+      return;
+    }
     setSaving(true);
     setError(null);
     try {
