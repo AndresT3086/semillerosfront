@@ -20,6 +20,26 @@ function estadoLabel(estado?: string | null) {
   return estado.replaceAll('_', ' ');
 }
 
+function estadoCaracterizacionLabel(estado?: string | null) {
+  if (estado === 'COMPLETO') return 'Caracterizado';
+  if (!estado || estado === 'GENERAL_PENDIENTE') return 'Pendiente';
+  return 'En caracterización';
+}
+
+function estadoVisibleSemillero(semillero: SemilleroCoordinador) {
+  if (semillero.estadoCaracterizacion !== 'COMPLETO') {
+    return {
+      className: 'badge-progress',
+      label: estadoCaracterizacionLabel(semillero.estadoCaracterizacion),
+    };
+  }
+
+  return {
+    className: 'badge-area',
+    label: semillero.estado === 'ACTIVO' ? 'Activo' : estadoLabel(semillero.estado),
+  };
+}
+
 function accionPrincipal(semillero: SemilleroCoordinador) {
   if (semillero.estado === 'BORRADOR' || semillero.estadoCaracterizacion !== 'COMPLETO') {
     return 'Continuar caracterización';
@@ -78,10 +98,18 @@ export default function CoordinadorHomePage({
     setLoadingSolicitudes(true);
     setError(null);
     try {
-      const data = await Promise.all(
+      const results = await Promise.allSettled(
         baseSemilleros.map((semillero) => getInscripcionesPendientes(semillero.id, token)),
       );
-      setSolicitudes(data.flat());
+      const solicitudesCargadas = results
+        .filter((result): result is PromiseFulfilledResult<InscripcionPendiente[]> => result.status === 'fulfilled')
+        .flatMap((result) => result.value);
+
+      setSolicitudes(solicitudesCargadas);
+
+      if (results.some((result) => result.status === 'rejected')) {
+        setError('No se pudieron cargar algunas solicitudes. Verifica que el backend esté actualizado.');
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'No se pudieron cargar las solicitudes.');
     } finally {
@@ -224,36 +252,39 @@ export default function CoordinadorHomePage({
             </div>
           ) : activeTab === 'semilleros' ? (
             <div className="row g-4">
-              {semilleros.map((semillero) => (
-                <div className="col-12 col-md-6" key={semillero.id}>
-                  <div className="role-option text-start">
-                    <div className="d-flex align-items-start justify-content-between gap-3 mb-3">
-                      <div>
-                        <span className="semillero-badge badge-redsin mb-2">{semillero.codigo}</span>
-                        <h3 className="h5 fw-bold mb-1" style={{ color: 'var(--udea-verde-oscuro)' }}>
-                          {semillero.nombre || 'Semillero sin nombre'}
-                        </h3>
+              {semilleros.map((semillero) => {
+                const estadoVisible = estadoVisibleSemillero(semillero);
+                return (
+                  <div className="col-12 col-md-6" key={semillero.id}>
+                    <div className="role-option text-start">
+                      <div className="d-flex align-items-start justify-content-between gap-3 mb-3">
+                        <div>
+                          <span className="semillero-badge badge-redsin mb-2">{semillero.codigo}</span>
+                          <h3 className="h5 fw-bold mb-1" style={{ color: 'var(--udea-verde-oscuro)' }}>
+                            {semillero.nombre || 'Semillero sin nombre'}
+                          </h3>
+                        </div>
+                        <span className={`semillero-badge ${estadoVisible.className}`}>{estadoVisible.label}</span>
                       </div>
-                      <span className="semillero-badge badge-area">{estadoLabel(semillero.estado)}</span>
-                    </div>
 
-                    <div className="info-item">
-                      <span className="info-label">Caracterización:</span>
-                      <span className="info-value">{estadoLabel(semillero.estadoCaracterizacion)}</span>
-                    </div>
-                    <div className="info-item">
-                      <span className="info-label">Última actualización:</span>
-                      <span className="info-value">
-                        {fechaVisible(semillero.fechaActualizacion ?? semillero.fechaCreacion)}
-                      </span>
-                    </div>
+                      <div className="info-item">
+                        <span className="info-label">Caracterización:</span>
+                        <span className="info-value">{estadoCaracterizacionLabel(semillero.estadoCaracterizacion)}</span>
+                      </div>
+                      <div className="info-item">
+                        <span className="info-label">Última actualización:</span>
+                        <span className="info-value">
+                          {fechaVisible(semillero.fechaActualizacion ?? semillero.fechaCreacion)}
+                        </span>
+                      </div>
 
-                    <button className="btn-select" onClick={() => onOpenSemillero(semillero.id)}>
-                      <i className="bi bi-arrow-right-circle me-1"></i>{accionPrincipal(semillero)}
-                    </button>
+                      <button className="btn-select" onClick={() => onOpenSemillero(semillero.id)}>
+                        <i className="bi bi-arrow-right-circle me-1"></i>{accionPrincipal(semillero)}
+                      </button>
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           ) : loadingSolicitudes ? (
             <div className="text-center py-5">

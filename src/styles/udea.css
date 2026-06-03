@@ -278,6 +278,11 @@ body {
   color: var(--udea-turquesa);
 }
 
+.badge-progress {
+  background-color: rgba(124, 150, 64, 0.14);
+  color: var(--udea-verde-principal);
+}
+
 .semillero-body {
   display: flex;
   flex: 1;
