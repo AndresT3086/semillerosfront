@@ -87,24 +87,30 @@ export default function TabGeneral({ semillero, initialData, onDraftChange, onSa
 
   function buildPayload(): GuardarGeneralPayload | null {
     if (!form.nombre.trim()) return null;
+    if (!form.siglas.trim()) return null;
     if (!form.correoSemillero.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.correoSemillero)) return null;
+    if (!form.telefono.trim()) return null;
+    if (!form.anioCreacion) return null;
     if (!form.mision.trim()) return null;
     if (!form.vision.trim()) return null;
     if (!form.objetivo.trim()) return null;
+    if (!form.lineasInvestigacion.trim()) return null;
+    if (!form.palabrasClave.trim()) return null;
+    if (!form.grupoInvestigacion.trim()) return null;
     if (!form.idUnidadAcademica || !form.idCampus || !form.idAreaOcde) return null;
 
     return {
       nombre: form.nombre.trim(),
-      siglas: form.siglas.trim() || undefined,
+      siglas: form.siglas.trim(),
       correoSemillero: form.correoSemillero.trim(),
-      telefono: form.telefono.trim() || undefined,
-      anioCreacion: form.anioCreacion ? parseInt(form.anioCreacion) : undefined,
+      telefono: form.telefono.trim(),
+      anioCreacion: parseInt(form.anioCreacion),
       mision: form.mision.trim(),
       vision: form.vision.trim(),
       objetivo: form.objetivo.trim(),
-      lineasInvestigacion: form.lineasInvestigacion.trim() || undefined,
-      palabrasClave: form.palabrasClave.trim() || undefined,
-      grupoInvestigacion: form.grupoInvestigacion.trim() || undefined,
+      lineasInvestigacion: form.lineasInvestigacion.trim(),
+      palabrasClave: form.palabrasClave.trim(),
+      grupoInvestigacion: form.grupoInvestigacion.trim(),
       idUnidadAcademica: parseInt(form.idUnidadAcademica),
       idCampus: parseInt(form.idCampus),
       idAreaOcde: parseInt(form.idAreaOcde),
@@ -118,11 +124,17 @@ export default function TabGeneral({ semillero, initialData, onDraftChange, onSa
   function validate(): boolean {
     const e: Errors = {};
     if (!form.nombre.trim()) e.nombre = 'El nombre es obligatorio.';
+    if (!form.siglas.trim()) e.siglas = 'Las siglas son obligatorias.';
     if (!form.correoSemillero.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.correoSemillero))
       e.correoSemillero = 'Ingrese un correo válido.';
+    if (!form.telefono.trim()) e.telefono = 'El teléfono es obligatorio.';
+    if (!form.anioCreacion) e.anioCreacion = 'El año de creación es obligatorio.';
     if (!form.mision.trim()) e.mision = 'La misión es obligatoria.';
     if (!form.vision.trim()) e.vision = 'La visión es obligatoria.';
     if (!form.objetivo.trim()) e.objetivo = 'El objetivo es obligatorio.';
+    if (!form.lineasInvestigacion.trim()) e.lineasInvestigacion = 'Las líneas de investigación son obligatorias.';
+    if (!form.palabrasClave.trim()) e.palabrasClave = 'Las palabras clave son obligatorias.';
+    if (!form.grupoInvestigacion.trim()) e.grupoInvestigacion = 'El grupo de investigación es obligatorio.';
     if (!form.idUnidadAcademica) e.idUnidadAcademica = 'Seleccione la unidad académica.';
     if (!form.idCampus) e.idCampus = 'Seleccione el campus.';
     if (!form.idAreaOcde) e.idAreaOcde = 'Seleccione el área OCDE.';
@@ -167,9 +179,12 @@ export default function TabGeneral({ semillero, initialData, onDraftChange, onSa
           <FieldErr msg={errors.nombre} />
         </div>
         <div className="col-md-3">
-          <label className="form-label small fw-semibold" style={{ color: 'var(--udea-verde-oscuro)' }}>Siglas</label>
+          <label className="form-label small fw-semibold" style={{ color: 'var(--udea-verde-oscuro)' }}>
+            Siglas{req('')}
+          </label>
           <input type="text" className={fc('siglas')} placeholder="SEROBOT"
             value={form.siglas} onChange={e => set('siglas', e.target.value)} maxLength={30} />
+          <FieldErr msg={errors.siglas} />
         </div>
         <div className="col-md-4">
           <label className="form-label small fw-semibold" style={{ color: 'var(--udea-verde-oscuro)' }}>
@@ -184,19 +199,28 @@ export default function TabGeneral({ semillero, initialData, onDraftChange, onSa
       {/* Row 2: teléfono, año, grupo */}
       <div className="row g-3 mb-3">
         <div className="col-md-4">
-          <label className="form-label small fw-semibold" style={{ color: 'var(--udea-verde-oscuro)' }}>Teléfono</label>
+          <label className="form-label small fw-semibold" style={{ color: 'var(--udea-verde-oscuro)' }}>
+            Teléfono{req('')}
+          </label>
           <input type="tel" className={fc('telefono')} placeholder="Número de contacto"
             value={form.telefono} onChange={e => set('telefono', e.target.value)} maxLength={20} />
+          <FieldErr msg={errors.telefono} />
         </div>
         <div className="col-md-4">
-          <label className="form-label small fw-semibold" style={{ color: 'var(--udea-verde-oscuro)' }}>Año de creación</label>
+          <label className="form-label small fw-semibold" style={{ color: 'var(--udea-verde-oscuro)' }}>
+            Año de creación{req('')}
+          </label>
           <input type="number" className={fc('anioCreacion')} placeholder="Ej. 2020"
             value={form.anioCreacion} onChange={e => set('anioCreacion', e.target.value)} min={1900} max={2100} />
+          <FieldErr msg={errors.anioCreacion} />
         </div>
         <div className="col-md-4">
-          <label className="form-label small fw-semibold" style={{ color: 'var(--udea-verde-oscuro)' }}>Grupo de investigación</label>
+          <label className="form-label small fw-semibold" style={{ color: 'var(--udea-verde-oscuro)' }}>
+            Grupo de investigación{req('')}
+          </label>
           <input type="text" className={fc('grupoInvestigacion')} placeholder="Nombre del grupo"
             value={form.grupoInvestigacion} onChange={e => set('grupoInvestigacion', e.target.value)} maxLength={200} />
+          <FieldErr msg={errors.grupoInvestigacion} />
         </div>
       </div>
 
@@ -271,14 +295,20 @@ export default function TabGeneral({ semillero, initialData, onDraftChange, onSa
       {/* Líneas e investigación */}
       <div className="row g-3">
         <div className="col-md-6">
-          <label className="form-label small fw-semibold" style={{ color: 'var(--udea-verde-oscuro)' }}>Líneas de investigación</label>
+          <label className="form-label small fw-semibold" style={{ color: 'var(--udea-verde-oscuro)' }}>
+            Líneas de investigación{req('')}
+          </label>
           <textarea className={fc('lineasInvestigacion')} rows={2} placeholder="Ej. Inteligencia Artificial, IoT..."
             value={form.lineasInvestigacion} onChange={e => set('lineasInvestigacion', e.target.value)} />
+          <FieldErr msg={errors.lineasInvestigacion} />
         </div>
         <div className="col-md-6">
-          <label className="form-label small fw-semibold" style={{ color: 'var(--udea-verde-oscuro)' }}>Palabras clave</label>
+          <label className="form-label small fw-semibold" style={{ color: 'var(--udea-verde-oscuro)' }}>
+            Palabras clave{req('')}
+          </label>
           <textarea className={fc('palabrasClave')} rows={2} placeholder="Ej. machine learning, datos, IoT..."
             value={form.palabrasClave} onChange={e => set('palabrasClave', e.target.value)} maxLength={500} />
+          <FieldErr msg={errors.palabrasClave} />
         </div>
       </div>
 
