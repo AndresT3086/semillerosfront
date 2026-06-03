@@ -9,6 +9,7 @@ import type {
   GuardarOrganizacionPayload,
   GuardarProduccionPayload,
   GuardarRelacionamientoPayload,
+  InscripcionPendiente,
   InscripcionFormData,
   LoginResponse,
   PageResponse,
@@ -133,6 +134,42 @@ export async function getSemilleroCoordinadorById(
   return apiFetch<SemilleroCoordinador>(`/api/v1/coordinador/semilleros/${idSemillero}`, {
     headers: authHeaders(token),
   });
+}
+
+export async function getInscripcionesPendientes(
+  idSemillero: number,
+  token: string,
+): Promise<InscripcionPendiente[]> {
+  return apiFetch<InscripcionPendiente[]>(
+    `/api/v1/coordinador/semilleros/${idSemillero}/inscripciones/pendientes`,
+    { headers: authHeaders(token) },
+  );
+}
+
+export async function aprobarInscripcion(
+  idInscripcion: number,
+  token: string,
+): Promise<InscripcionPendiente> {
+  return apiFetch<InscripcionPendiente>(
+    `/api/v1/coordinador/semilleros/inscripciones/${idInscripcion}/aprobar`,
+    {
+      method: 'POST',
+      headers: authHeaders(token),
+    },
+  );
+}
+
+export async function rechazarInscripcion(
+  idInscripcion: number,
+  token: string,
+): Promise<InscripcionPendiente> {
+  return apiFetch<InscripcionPendiente>(
+    `/api/v1/coordinador/semilleros/inscripciones/${idInscripcion}/rechazar`,
+    {
+      method: 'POST',
+      headers: authHeaders(token),
+    },
+  );
 }
 
 export async function guardarPestanaGeneral(

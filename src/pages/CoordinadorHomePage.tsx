@@ -1,6 +1,12 @@
 import { useEffect, useState } from 'react';
-import type { SemilleroCoordinador } from '../types';
-import { getMisSemilleros, iniciarCaracterizacion } from '../api/semillerosApi';
+import type { InscripcionPendiente, SemilleroCoordinador } from '../types';
+import {
+  aprobarInscripcion,
+  getInscripcionesPendientes,
+  getMisSemilleros,
+  iniciarCaracterizacion,
+  rechazarInscripcion,
+} from '../api/semillerosApi';
 
 interface Props {
   token: string;
@@ -30,16 +36,25 @@ function fechaVisible(fecha?: string | null) {
   }).format(new Date(fecha));
 }
 
+function nombreCompleto(inscripcion: InscripcionPendiente) {
+  return `${inscripcion.nombres} ${inscripcion.apellidos}`.trim();
+}
+
 export default function CoordinadorHomePage({
   token,
   correoCoordinador,
   onLogout,
   onOpenSemillero,
 }: Props) {
+  const [activeTab, setActiveTab] = useState<'semilleros' | 'solicitudes'>('semilleros');
   const [semilleros, setSemilleros] = useState<SemilleroCoordinador[]>([]);
+  const [solicitudes, setSolicitudes] = useState<InscripcionPendiente[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadingSolicitudes, setLoadingSolicitudes] = useState(false);
   const [creating, setCreating] = useState(false);
+  const [processingId, setProcessingId] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
 
   async function cargarSemilleros() {
     setLoading(true);
@@ -54,13 +69,40 @@ export default function CoordinadorHomePage({
     }
   }
 
+  async function cargarSolicitudes(baseSemilleros = semilleros) {
+    if (baseSemilleros.length === 0) {
+      setSolicitudes([]);
+      return;
+    }
+
+    setLoadingSolicitudes(true);
+    setError(null);
+    try {
+      const data = await Promise.all(
+        baseSemilleros.map((semillero) => getInscripcionesPendientes(semillero.id, token)),
+      );
+      setSolicitudes(data.flat());
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'No se pudieron cargar las solicitudes.');
+    } finally {
+      setLoadingSolicitudes(false);
+    }
+  }
+
   useEffect(() => {
     cargarSemilleros();
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
+  useEffect(() => {
+    if (activeTab === 'solicitudes' && !loading) {
+      cargarSolicitudes();
+    }
+  }, [activeTab, loading]); // eslint-disable-line react-hooks/exhaustive-deps
+
   async function handleRegistrar() {
     setCreating(true);
     setError(null);
+    setSuccess(null);
     try {
       const nuevo = await iniciarCaracterizacion(token);
       onOpenSemillero(nuevo.id);
@@ -68,6 +110,26 @@ export default function CoordinadorHomePage({
       setError(err instanceof Error ? err.message : 'No se pudo registrar el semillero.');
     } finally {
       setCreating(false);
+    }
+  }
+
+  async function handleCambiarEstado(idInscripcion: number, accion: 'aprobar' | 'rechazar') {
+    setProcessingId(idInscripcion);
+    setError(null);
+    setSuccess(null);
+    try {
+      if (accion === 'aprobar') {
+        await aprobarInscripcion(idInscripcion, token);
+        setSuccess('Solicitud aprobada exitosamente.');
+      } else {
+        await rechazarInscripcion(idInscripcion, token);
+        setSuccess('Solicitud rechazada exitosamente.');
+      }
+      setSolicitudes((prev) => prev.filter((solicitud) => solicitud.id !== idInscripcion));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'No se pudo actualizar la solicitud.');
+    } finally {
+      setProcessingId(null);
     }
   }
 
@@ -110,9 +172,33 @@ export default function CoordinadorHomePage({
             </button>
           </div>
 
+          <div className="d-flex flex-wrap gap-2 mb-4">
+            <button
+              className={`btn ${activeTab === 'semilleros' ? 'btn-udea' : 'btn-outline-secondary'}`}
+              onClick={() => setActiveTab('semilleros')}
+            >
+              <i className="bi bi-journal-text me-2"></i>Mis semilleros
+            </button>
+            <button
+              className={`btn ${activeTab === 'solicitudes' ? 'btn-udea' : 'btn-outline-secondary'}`}
+              onClick={() => setActiveTab('solicitudes')}
+            >
+              <i className="bi bi-inbox me-2"></i>Solicitudes pendientes
+              {solicitudes.length > 0 && (
+                <span className="badge text-bg-light ms-2">{solicitudes.length}</span>
+              )}
+            </button>
+          </div>
+
           {error && (
             <div className="alert alert-danger py-2 small">
               <i className="bi bi-exclamation-triangle me-2"></i>{error}
+            </div>
+          )}
+
+          {success && (
+            <div className="alert alert-success py-2 small">
+              <i className="bi bi-check-circle me-2"></i>{success}
             </div>
           )}
 
@@ -121,7 +207,7 @@ export default function CoordinadorHomePage({
               <div className="spinner-border" style={{ color: 'var(--udea-verde-principal)' }}></div>
               <p className="text-muted mt-3 mb-0">Cargando tus semilleros...</p>
             </div>
-          ) : semilleros.length === 0 ? (
+          ) : activeTab === 'semilleros' && semilleros.length === 0 ? (
             <div className="text-center py-5">
               <div className="role-icon coordinador-icon">
                 <i className="bi bi-journal-plus"></i>
@@ -136,7 +222,7 @@ export default function CoordinadorHomePage({
                 <i className="bi bi-plus-circle-fill me-2"></i>Registrar nuevo semillero
               </button>
             </div>
-          ) : (
+          ) : activeTab === 'semilleros' ? (
             <div className="row g-4">
               {semilleros.map((semillero) => (
                 <div className="col-12 col-md-6" key={semillero.id}>
@@ -165,6 +251,89 @@ export default function CoordinadorHomePage({
                     <button className="btn-select" onClick={() => onOpenSemillero(semillero.id)}>
                       <i className="bi bi-arrow-right-circle me-1"></i>{accionPrincipal(semillero)}
                     </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : loadingSolicitudes ? (
+            <div className="text-center py-5">
+              <div className="spinner-border" style={{ color: 'var(--udea-verde-principal)' }}></div>
+              <p className="text-muted mt-3 mb-0">Cargando solicitudes pendientes...</p>
+            </div>
+          ) : solicitudes.length === 0 ? (
+            <div className="text-center py-5">
+              <div className="role-icon coordinador-icon">
+                <i className="bi bi-inbox"></i>
+              </div>
+              <h3 className="h4 mt-3" style={{ color: 'var(--udea-verde-oscuro)' }}>
+                No tienes solicitudes pendientes
+              </h3>
+              <p className="text-muted">
+                Cuando un estudiante solicite inscripción a alguno de tus semilleros aparecerá aquí.
+              </p>
+            </div>
+          ) : (
+            <div className="d-flex flex-column gap-3">
+              {solicitudes.map((solicitud) => (
+                <div className="role-option text-start" key={solicitud.id}>
+                  <div className="d-flex flex-column flex-lg-row justify-content-between gap-3">
+                    <div className="flex-grow-1">
+                      <div className="d-flex flex-wrap align-items-center gap-2 mb-2">
+                        <span className="semillero-badge badge-redsin">{solicitud.nombreSemillero}</span>
+                        <span className="semillero-badge badge-area">{solicitud.estado}</span>
+                      </div>
+                      <h3 className="h5 fw-bold mb-2" style={{ color: 'var(--udea-verde-oscuro)' }}>
+                        {nombreCompleto(solicitud)}
+                      </h3>
+                      <div className="row g-2 mb-3">
+                        <div className="col-md-6">
+                          <span className="info-label">Correo:</span>
+                          <span className="info-value ms-2">{solicitud.correo}</span>
+                        </div>
+                        <div className="col-md-6">
+                          <span className="info-label">Teléfono:</span>
+                          <span className="info-value ms-2">{solicitud.telefono}</span>
+                        </div>
+                        <div className="col-md-6">
+                          <span className="info-label">Programa:</span>
+                          <span className="info-value ms-2">{solicitud.programa}</span>
+                        </div>
+                        <div className="col-md-6">
+                          <span className="info-label">Semestre:</span>
+                          <span className="info-value ms-2">{solicitud.semestre}</span>
+                        </div>
+                        <div className="col-md-6">
+                          <span className="info-label">Cédula:</span>
+                          <span className="info-value ms-2">{solicitud.cedula}</span>
+                        </div>
+                        <div className="col-md-6">
+                          <span className="info-label">Fecha:</span>
+                          <span className="info-value ms-2">{fechaVisible(solicitud.fechaInscripcion)}</span>
+                        </div>
+                      </div>
+                      <p className="text-muted mb-0">{solicitud.motivacion}</p>
+                    </div>
+
+                    <div className="d-flex flex-row flex-lg-column gap-2 justify-content-end" style={{ minWidth: 170 }}>
+                      <button
+                        className="btn btn-udea"
+                        disabled={processingId === solicitud.id}
+                        onClick={() => handleCambiarEstado(solicitud.id, 'aprobar')}
+                      >
+                        {processingId === solicitud.id ? (
+                          <span className="spinner-border spinner-border-sm"></span>
+                        ) : (
+                          <><i className="bi bi-check-circle me-1"></i>Aprobar</>
+                        )}
+                      </button>
+                      <button
+                        className="btn btn-outline-secondary"
+                        disabled={processingId === solicitud.id}
+                        onClick={() => handleCambiarEstado(solicitud.id, 'rechazar')}
+                      >
+                        <i className="bi bi-x-circle me-1"></i>Rechazar
+                      </button>
+                    </div>
                   </div>
                 </div>
               ))}

@@ -72,6 +72,22 @@ export interface InscripcionFormData {
 
 export type InscripcionFormErrors = Partial<Record<keyof InscripcionFormData, string>>;
 
+export interface InscripcionPendiente {
+  id: number;
+  idSemillero: number;
+  nombreSemillero: string;
+  nombres: string;
+  apellidos: string;
+  cedula: string;
+  correo: string;
+  telefono: string;
+  programa: string;
+  semestre: string;
+  motivacion: string;
+  estado: string;
+  fechaInscripcion: string;
+}
+
 // Filtros de búsqueda (usan IDs para enviar al backend)
 export interface FilterValues {
   idUnidad: string;
