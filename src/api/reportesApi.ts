@@ -24,6 +24,7 @@ export interface ReporteKpis {
     semillerosActivos?: number;
     usuariosRegistrados?: number;
     miembrosActivos?: number;
+    actividadesRealizadas?: number;
     /** Diferencia en puntos porcentuales. */
     tasaParticipacion?: number;
   };

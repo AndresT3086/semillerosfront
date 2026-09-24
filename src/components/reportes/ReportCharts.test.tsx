@@ -10,7 +10,7 @@ import type { ReporteKpis, ReporteRendimiento } from '../../api/reportesApi';
 
 const kpis: ReporteKpis = {
   semillerosActivos: 1200, usuariosRegistrados: 10, miembrosActivos: 8, actividadesRealizadas: 3, tasaParticipacion: 80,
-  tendencias: { semillerosActivos: 20, usuariosRegistrados: -5 }, periodoComparado: '2024', fechaCalculo: '2026-09-24T10:30:00', alcance: 'ADMIN',
+  tendencias: { semillerosActivos: 20, usuariosRegistrados: -5, actividadesRealizadas: 50 }, periodoComparado: '2024', fechaCalculo: '2026-09-24T10:30:00', alcance: 'ADMIN',
 };
 
 describe('KpiCards (HU1)', () => {
@@ -20,6 +20,7 @@ describe('KpiCards (HU1)', () => {
     expect(region.getByText('1.200')).toBeInTheDocument();
     expect(region.getByText('80,0 %')).toBeInTheDocument();
     expect(region.getByText('+20,0 % vs 2024')).toBeInTheDocument();
+    expect(region.getByText('+50,0 % vs 2024')).toBeInTheDocument();
     expect(region.getByText('-5,0 % vs 2024')).toHaveClass('report-trend', 'is-down');
     expect(region.getAllByRole('tooltip', { hidden: true })).toHaveLength(4);
     expect(region.getByText('Variación frente a 2024: +20,0 %.')).toBeInTheDocument();

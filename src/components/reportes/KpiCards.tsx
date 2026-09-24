@@ -41,8 +41,8 @@ export default function KpiCards({ kpis, loading }: { kpis: ReporteKpis | null; 
       value={kpis ? numero(kpis.usuariosRegistrados) : null} note="Personas únicas (por cédula) vinculadas a semilleros."
       tendencia={variacion(tendencias?.usuariosRegistrados)} /></div>
     <div className="col-sm-6 col-xl-3"><KpiCard label="Actividades realizadas" icon="calendar-check" loading={loading} comparado={comparado}
-      value={kpis ? numero(kpis.actividadesRealizadas) : null} note="Actividades del formulario de caracterización que realizan los semilleros."
-      tendencia={null} /></div>
+      value={kpis ? numero(kpis.actividadesRealizadas) : null} note="Actividades registradas por los coordinadores en el período."
+      tendencia={variacion(tendencias?.actividadesRealizadas)} /></div>
     <div className="col-sm-6 col-xl-3"><KpiCard label="Tasa de participación" icon="pie-chart" loading={loading} comparado={comparado}
       value={kpis?.tasaParticipacion === undefined ? null : porcentaje(kpis.tasaParticipacion)}
       note={kpis ? `Miembros activos (${numero(kpis.miembrosActivos)}) / registrados × 100.` : 'Miembros activos / registrados × 100.'}
