@@ -1,11 +1,13 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, expect, it, vi } from 'vitest';
-import { getReportesDisponibles, getUnidades } from '../api/semillerosApi';
+import { getReportesDisponibles, getUnidades, getCatalogoReportes, getReporteSemillero } from '../api/semillerosApi';
 import AdminReportsPage from './AdminReportsPage';
-vi.mock('../api/semillerosApi', () => ({ getReportesDisponibles: vi.fn(), getUnidades: vi.fn() }));
+vi.mock('../api/semillerosApi', () => ({ getReportesDisponibles: vi.fn(), getUnidades: vi.fn(), getCatalogoReportes: vi.fn(), getReporteSemillero: vi.fn() }));
 const page = { contenido: [], totalElementos: 23, paginaActual: 0, totalPaginas: 3, tamano: 10, esPrimeraPagina: true, esUltimaPagina: false };
 beforeEach(() => {
   vi.resetAllMocks();
+  sessionStorage.clear();
+  vi.mocked(getCatalogoReportes).mockResolvedValue([]);
   vi.mocked(getReportesDisponibles).mockResolvedValue(page);
   vi.mocked(getUnidades).mockResolvedValue([{ id: 2, nombre: 'Ingeniería', siglas: 'ING' }]);
 });
@@ -29,4 +31,33 @@ it('distingue cero real de información ausente y se recupera de errores', async
   fireEvent.click(screen.getByRole('button', { name: 'Reintentar' }));
   expect(await screen.findByText('0')).toBeInTheDocument();
   expect(screen.getByText(/No se encontraron semilleros activos/)).toBeInTheDocument();
+});
+
+it('conserva el período aplicado al navegar y no consulta datos actuales como históricos', async () => {
+  const props = { onBack: () => {}, onLogout: () => {} };
+  const view = render(<AdminReportsPage {...props} />);
+  await screen.findByText('23');
+  fireEvent.change(screen.getByLabelText('Período académico'), { target: { value: '2025-1' } });
+  const calls = vi.mocked(getReportesDisponibles).mock.calls.length;
+  fireEvent.click(screen.getByRole('button', { name: 'Aplicar filtros' }));
+  expect(await screen.findByText(/Consulta no disponible para/)).toBeInTheDocument();
+  expect(getReportesDisponibles).toHaveBeenCalledTimes(calls);
+  expect(screen.queryByText('23')).not.toBeInTheDocument();
+  view.unmount();
+  render(<AdminReportsPage {...props} />);
+  expect(screen.getByLabelText('Período académico')).toHaveValue('2025-1');
+  fireEvent.click(screen.getByRole('button', { name: 'Limpiar' }));
+  expect(await screen.findByText('23')).toBeInTheDocument();
+});
+it('consulta exclusivamente el semillero seleccionado', async () => {
+  const item = { id: 4, nombre: 'Robótica', facultad: 'Ingeniería', campus: 'Medellín', totalActividadesCientificas: 3, estado: 'ACTIVO', codigo: 'R', siglas: 'R', anioCreacion: 2025, grupoInvestigacion: '', totalSemilleristas: 2 };
+  vi.mocked(getCatalogoReportes).mockResolvedValue([item]);
+  vi.mocked(getReporteSemillero).mockResolvedValue({ ...page, contenido: [item], totalElementos: 1, totalPaginas: 1, esUltimaPagina: true });
+  render(<AdminReportsPage onBack={() => {}} onLogout={() => {}} />);
+  await screen.findByText('23');
+  fireEvent.change(screen.getByLabelText('Semillero'), { target: { value: '4' } });
+  fireEvent.click(screen.getByRole('button', { name: 'Aplicar filtros' }));
+  await waitFor(() => expect(getReporteSemillero).toHaveBeenCalledWith('4'));
+  expect(await screen.findByRole('rowheader', { name: 'Robótica' })).toBeInTheDocument();
+  expect(screen.queryByText('23')).not.toBeInTheDocument();
 });

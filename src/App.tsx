@@ -3,6 +3,7 @@ import type { LoginResponse } from './types';
 import HomePage from './pages/HomePage';
 import AdminReportsPage from './pages/AdminReportsPage';
 import AdminDashboardPage from './pages/AdminDashboardPage';
+import { REPORT_FILTERS_KEY } from './reports/filters';
 import { isAdminToken } from './auth/role';
 import LoginPage from './pages/LoginPage';
 import CoordinadorHomePage from './pages/CoordinadorHomePage';
@@ -60,6 +61,7 @@ export default function App() {
   const [sessionMessage, setSessionMessage] = useState<string | null>(null);
 
   function handleLoginSuccess(response: LoginResponse) {
+    sessionStorage.removeItem(REPORT_FILTERS_KEY);
     sessionStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(response));
     sessionStorage.setItem(LAST_ACTIVITY_KEY, Date.now().toString());
     sessionStorage.removeItem(SELECTED_SEMILLERO_KEY);
@@ -70,6 +72,7 @@ export default function App() {
   }
 
   function handleLogout(message?: string) {
+    sessionStorage.removeItem(REPORT_FILTERS_KEY);
     clearStoredSession();
     setAuth(null);
     setSelectedSemilleroId(null);

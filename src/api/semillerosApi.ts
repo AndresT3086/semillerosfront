@@ -375,3 +375,22 @@ export async function getReportesDisponibles(
     cache: 'no-store',
   });
 }
+
+// Catálogo completo, no solo la primera página, para seleccionar un semillero.
+export async function getCatalogoReportes(idUnidad = ''): Promise<SemilleroResumen[]> {
+  const first = await getReportesDisponibles(idUnidad, 0);
+  const items = [...first.contenido];
+  for (let pagina = 1; pagina < first.totalPaginas; pagina++) {
+    const next = await getReportesDisponibles(idUnidad, pagina);
+    items.push(...next.contenido);
+  }
+  return [...new Map(items.map(item => [item.id, item])).values()];
+}
+
+export async function getReporteSemillero(id: string): Promise<PageResponse<SemilleroResumen>> {
+  const item = await apiFetch<SemilleroDetalle>(`/api/v1/semilleros/${encodeURIComponent(id)}`, { cache: 'no-store' });
+  // Esta ruta consulta el estado actual, no admite filtros históricos.
+  const contenido = item.estado === 'ACTIVO' ? [item] : [];
+  return { contenido, totalElementos: contenido.length, totalPaginas: contenido.length ? 1 : 0,
+    paginaActual: 0, tamano: 1, esPrimeraPagina: true, esUltimaPagina: true };
+}
