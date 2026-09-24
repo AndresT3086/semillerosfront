@@ -1,8 +1,8 @@
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { beforeEach, expect, it, vi } from 'vitest';
-import { getReportesDisponibles, getUnidades, getCatalogoReportes, getReporteSemillero, getDistribucionDisponible, getCampus, getDistribucionCampus } from '../api/semillerosApi';
+import { getKpisAdministrativos, getReportesDisponibles, getUnidades, getCatalogoReportes, getReporteSemillero, getDistribucionDisponible, getCampus, getDistribucionCampus } from '../api/semillerosApi';
 import AdminReportsPage from './AdminReportsPage';
-vi.mock('../api/semillerosApi', () => ({ getReportesDisponibles: vi.fn(), getUnidades: vi.fn(), getCatalogoReportes: vi.fn(), getReporteSemillero: vi.fn(), getDistribucionDisponible: vi.fn(), getCampus: vi.fn(), getDistribucionCampus: vi.fn() }));
+vi.mock('../api/semillerosApi', () => ({ getKpisAdministrativos: vi.fn(), getReportesDisponibles: vi.fn(), getUnidades: vi.fn(), getCatalogoReportes: vi.fn(), getReporteSemillero: vi.fn(), getDistribucionDisponible: vi.fn(), getCampus: vi.fn(), getDistribucionCampus: vi.fn() }));
 const page = { contenido: [], totalElementos: 23, paginaActual: 0, totalPaginas: 3, tamano: 10, esPrimeraPagina: true, esUltimaPagina: false };
 beforeEach(() => {
   vi.resetAllMocks();
@@ -87,4 +87,27 @@ it('filtra la tabla por campus y unidad desde el gráfico y conserva la selecci�
   expect(JSON.parse(sessionStorage.getItem('sigsi_report_filters')!).idCampus).toBe('9');
   fireEvent.click(screen.getByRole('button', { name: 'Ver todos los campus' }));
   await waitFor(() => expect(getReportesDisponibles).toHaveBeenLastCalledWith('2', 0, ''));
+});
+
+it('consulta KPI administrativos con filtros y actualiza eventos fechados', async () => {
+  vi.mocked(getKpisAdministrativos).mockResolvedValue({ semillerosActivos: 7, usuariosRegistrados: 10, miembrosActivos: 5, actividadesRealizadas: 3, tasaParticipacion: 50, fechaCalculo: '2026-09-24T00:00:00Z', alcance: 'SEMILLEROS_ACTIVOS', estadoTendencias: 'SIN_HISTORICO' });
+  render(<AdminReportsPage token="admin-token" onBack={() => {}} onLogout={() => {}} />);
+  const cards = within(screen.getByRole('region', { name: 'Indicadores clave' }));
+  expect(await cards.findByText('50 %')).toBeInTheDocument();
+  expect(cards.getByText('7')).toBeInTheDocument();
+  expect(cards.getByText('3')).toBeInTheDocument();
+  fireEvent.change(screen.getByLabelText('Unidad académica'), { target: { value: '2' } });
+  fireEvent.click(screen.getByRole('button', { name: 'Aplicar filtros' }));
+  await waitFor(() => expect(getKpisAdministrativos).toHaveBeenLastCalledWith('admin-token', expect.objectContaining({ idUnidad: '2' })));
+  const calls = vi.mocked(getKpisAdministrativos).mock.calls.length;
+  fireEvent.click(screen.getByRole('button', { name: 'Actualizar datos' }));
+  await waitFor(() => expect(getKpisAdministrativos).toHaveBeenCalledTimes(calls + 1));
+});
+it('no reemplaza un fallo administrativo con cifras del catálogo público', async () => {
+  vi.mocked(getKpisAdministrativos).mockRejectedValue(new Error('offline'));
+  render(<AdminReportsPage token="admin-token" onBack={() => {}} onLogout={() => {}} />);
+  expect(await screen.findByText(/No se pudieron consultar los KPI administrativos/)).toBeInTheDocument();
+  const cards = within(screen.getByRole('region', { name: 'Indicadores clave' }));
+  expect(cards.getAllByText('—')).toHaveLength(4);
+  expect(cards.queryByText('23')).not.toBeInTheDocument();
 });

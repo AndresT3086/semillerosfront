@@ -443,3 +443,19 @@ export async function getDistribucionCampus(idUnidad = '', signal?: AbortSignal)
   }));
   return result.sort((a, b) => b.semilleros - a.semilleros || a.nombre.localeCompare(b.nombre, 'es'));
 }
+
+export interface KpisAdministrativos {
+  semillerosActivos: number;
+  usuariosRegistrados: number;
+  miembrosActivos: number;
+  actividadesRealizadas: number;
+  tasaParticipacion?: number | null;
+  fechaCalculo: string;
+  alcance: string;
+  estadoTendencias: string;
+}
+export async function getKpisAdministrativos(token: string, filters: { periodo: string; tipoUnidad: string; idUnidad: string; idCampus: string; idSemillero: string }): Promise<KpisAdministrativos> {
+  const params = new URLSearchParams();
+  for (const [key, value] of Object.entries(filters)) if (value) params.set(key, value);
+  return apiFetch<KpisAdministrativos>(`/api/v1/admin/reportes/kpis?${params}`, { headers: authHeaders(token), cache: 'no-store' });
+}

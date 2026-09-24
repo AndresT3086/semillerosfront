@@ -1,5 +1,5 @@
 import { useEffect, useId, useState } from 'react';
-import { getReportesDisponibles, getUnidades, getCatalogoReportes, getReporteSemillero, getCampus } from '../api/semillerosApi';
+import { getReportesDisponibles, getUnidades, getCatalogoReportes, getReporteSemillero, getCampus, getKpisAdministrativos, type KpisAdministrativos } from '../api/semillerosApi';
 import type { FiltroItem, PageResponse, SemilleroResumen } from '../types';
 import { EMPTY_FILTERS, REPORT_FILTERS_KEY, readReportFilters } from '../reports/filters';
 import MemberComposition from '../components/reportes/MemberComposition';
@@ -9,22 +9,25 @@ import Footer from '../components/Footer';
 import '../styles/admin.css';
 import '../styles/reports.css';
 
-function KpiCard({ label, icon, value, note, loading }: {
-  label: string; icon: string; value: number | null; note: string; loading: boolean;
+function KpiCard({ label, icon, value, note, loading, percentage = false }: {
+  label: string; icon: string; value: number | null; note: string; loading: boolean; percentage?: boolean;
 }) {
   const tooltipId = useId();
   return <article className="admin-stat report-kpi" tabIndex={0} aria-describedby={tooltipId}>
     <span className="admin-stat-icon"><i className={`bi bi-${icon}`} aria-hidden="true" /></span>
-    <div className="admin-stat-value">{loading ? '…' : value === null ? '—' : value.toLocaleString('es-CO')}</div>
+    <div className="admin-stat-value">{loading ? '…' : value === null ? '—' : `${value.toLocaleString('es-CO')} ${percentage ? '%' : ''}`}</div>
     <h2>{label}</h2><p>{note}</p>
     <div className="report-trend"><i className="bi bi-info-circle me-1" aria-hidden="true" />Tendencia no disponible</div>
     <span className="report-tooltip" role="tooltip" id={tooltipId}>No hay datos del período anterior para calcular la variación porcentual.</span>
   </article>;
 }
 
-export default function AdminReportsPage({ preview = false, onBack, onLogout }: {
-  preview?: boolean; onBack: () => void; onLogout: () => void;
+export default function AdminReportsPage({ preview = false, token, onBack, onLogout }: {
+  preview?: boolean; token?: string; onBack: () => void; onLogout: () => void;
 }) {
+  const [kpis, setKpis] = useState<KpisAdministrativos | null>(null);
+  const [kpiError, setKpiError] = useState(false);
+  const [kpiLoading, setKpiLoading] = useState(false);
   const [data, setData] = useState<PageResponse<SemilleroResumen> | null>(null);
   const [campus, setCampus] = useState<FiltroItem[]>([]);
   const [unidades, setUnidades] = useState<FiltroItem[]>([]);
@@ -43,6 +46,17 @@ export default function AdminReportsPage({ preview = false, onBack, onLogout }: 
   const [error, setError] = useState<string | null>(null);
   const [filterError, setFilterError] = useState(false);
   const [updatedAt, setUpdatedAt] = useState<Date | null>(null);
+
+  useEffect(() => {
+    let active = true;
+    setKpis(null); setKpiError(false); setKpiLoading(false);
+    if (!token || unsupported) return;
+    setKpiLoading(true);
+    getKpisAdministrativos(token, applied).then(result => { if (active) setKpis(result); })
+      .catch(() => { if (active) setKpiError(true); })
+      .finally(() => { if (active) setKpiLoading(false); });
+    return () => { active = false; };
+  }, [token, applied, unsupported, revision]);
 
   useEffect(() => {
     let active = true;
@@ -112,11 +126,13 @@ export default function AdminReportsPage({ preview = false, onBack, onLogout }: 
       <p className="small">Filtros aplicados: {applied.periodo || 'Estado actual'} · {applied.tipoUnidad || 'Todos los tipos'} · {applied.idUnidad ? unidades.find(item => String(item.id) === applied.idUnidad)?.nombre ?? `Unidad #${applied.idUnidad}` : 'Todas las unidades'} · {campus.find(item => String(item.id) === applied.idCampus)?.nombre ?? (applied.idCampus ? `Campus #${applied.idCampus}` : 'Todos los campus')} · {applied.idSemillero ? `Semillero #${applied.idSemillero}` : 'Todos los semilleros'}</p>
       {unsupported && <div className="alert alert-warning" role="status">Consulta no disponible para {applied.periodo ? `el período ${applied.periodo}` : 'el tipo de unidad seleccionado'}. Falta habilitar estos filtros en el servicio de reportes. No se han usado datos del estado actual como resultados de esta selección.</div>}
       {error && <div className="alert alert-danger" role="alert">{error}<button className="btn btn-link" onClick={() => setRevision(value => value + 1)}>Reintentar</button></div>}
+      {kpiError && <div role="alert" className="alert alert-warning">No se pudieron consultar los KPI administrativos. Pulsa «Actualizar datos» para reintentar.</div>}
+      {token && <p className="small text-muted">KPI sobre semilleros activos: personas únicas por cédula y eventos realizados hasta hoy. La tabla inferior todavía corresponde al catálogo público, que exige caracterización completa.</p>}
       <section className="row g-3 mb-4" aria-label="Indicadores clave" aria-busy={loading}>
-        <div className="col-sm-6 col-xl-3"><KpiCard label="Semilleros activos" icon="tree" value={data?.totalElementos ?? null} note={applied.idSemillero ? "Estado actual del semillero seleccionado." : "Activos con caracterización completa; conteo parcial."} loading={loading} /></div>
-        <div className="col-sm-6 col-xl-3"><KpiCard label="Usuarios registrados" icon="people" value={null} note="Total de usuarios aún no disponible." loading={false} /></div>
-        <div className="col-sm-6 col-xl-3"><KpiCard label="Actividades realizadas" icon="calendar-check" value={null} note="Total institucional aún no disponible." loading={false} /></div>
-        <div className="col-sm-6 col-xl-3"><KpiCard label="Tasa de participación" icon="pie-chart" value={null} note="Miembros activos / registrados × 100." loading={false} /></div>
+        <div className="col-sm-6 col-xl-3"><KpiCard label="Semilleros activos" icon="tree" value={token ? kpis?.semillerosActivos ?? null : data?.totalElementos ?? null} note={token ? "Todos los activos de la selección." : applied.idSemillero ? "Estado actual del semillero seleccionado." : "Activos con caracterización completa; conteo parcial."} loading={token ? kpiLoading : loading} /></div>
+        <div className="col-sm-6 col-xl-3"><KpiCard label="Usuarios registrados" icon="people" value={kpis?.usuariosRegistrados ?? null} note={token ? "Personas únicas por cédula entre integrantes." : "Total de usuarios aún no disponible."} loading={kpiLoading} /></div>
+        <div className="col-sm-6 col-xl-3"><KpiCard label="Actividades realizadas" icon="calendar-check" value={kpis?.actividadesRealizadas ?? null} note={token ? "Eventos fechados realizados hasta hoy." : "Total institucional aún no disponible."} loading={kpiLoading} /></div>
+        <div className="col-sm-6 col-xl-3"><KpiCard label="Tasa de participación" icon="pie-chart" value={kpis?.tasaParticipacion ?? null} percentage note="Personas activas / registradas × 100." loading={kpiLoading} /></div>
       </section>
       <p className="report-availability"><i className="bi bi-info-circle me-2" aria-hidden="true" />«—» indica información no disponible, no un valor de cero. Las comparaciones estarán disponibles cuando existan datos del período anterior.</p>
       <UnitDistribution idCampus={applied.idCampus} revision={revision} selectedId={applied.idUnidad} unsupported={unsupported} selectedSemillero={Boolean(applied.idSemillero)} onSelect={idUnidad => {

@@ -115,7 +115,7 @@ export default function App() {
   }, [auth]);
 
   if (view === 'reportes' && (ADMIN_PREVIEW || (auth && isAdminToken(auth.token)))) {
-    return <AdminReportsPage preview={ADMIN_PREVIEW} onBack={() => setView('admin')} onLogout={() => {
+    return <AdminReportsPage token={ADMIN_PREVIEW ? undefined : auth?.token} preview={ADMIN_PREVIEW} onBack={() => setView('admin')} onLogout={() => {
       window.history.replaceState(null, '', window.location.pathname);
       handleLogout();
     }} />;
