@@ -178,7 +178,7 @@ export default function App() {
   }
 
   if (view === 'admin' && auth && isAdminToken(auth.token)) {
-    return <AdminDashboardPage onReports={openReports} correo={auth.correo} onLogout={() => handleLogout()} />;
+    return <AdminDashboardPage onReports={openReports} correo={auth.correo} token={auth.token} onLogout={() => handleLogout()} />;
   }
 
   if (view === 'enlace' && enlace) {
