@@ -9,6 +9,7 @@ const EMPTY_FORM: InscripcionFormData = {
   cedula: '',
   correo: '',
   telefono: '',
+  sexo: '',
   programa: '',
   semestre: '',
   motivacion: '',
@@ -283,6 +284,22 @@ export default function RegistrationModal({
                       {errors.telefono && (
                         <div className="invalid-feedback d-block">{errors.telefono}</div>
                       )}
+                    </div>
+
+                    <div className="col-md-6 mb-3">
+                      <label className="form-label" htmlFor="inscripcion-sexo">Sexo</label>
+                      <select
+                        id="inscripcion-sexo"
+                        className="form-select"
+                        value={form.sexo}
+                        onChange={(e) => set('sexo', e.target.value)}
+                      >
+                        <option value="">Prefiero no informarlo</option>
+                        <option value="FEMENINO">Femenino</option>
+                        <option value="MASCULINO">Masculino</option>
+                        <option value="OTRO">Otro</option>
+                      </select>
+                      <small className="form-text text-muted">Solo se usa en estadísticas agregadas y anónimas</small>
                     </div>
 
                     <div className="col-md-6 mb-3">

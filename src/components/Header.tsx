@@ -1,9 +1,10 @@
 interface HeaderProps {
   onScrollToFilters: () => void;
   onAccesoSigsi: () => void;
+  onEstadisticas?: () => void;
 }
 
-export default function Header({ onScrollToFilters, onAccesoSigsi }: HeaderProps) {
+export default function Header({ onScrollToFilters, onAccesoSigsi, onEstadisticas }: HeaderProps) {
   return (
     <header className="udea-header">
       <div className="container">
@@ -21,6 +22,11 @@ export default function Header({ onScrollToFilters, onAccesoSigsi }: HeaderProps
               <button className="btn btn-outline-light" onClick={onScrollToFilters}>
                 <i className="bi bi-funnel me-1"></i>Filtrar
               </button>
+              {onEstadisticas && (
+                <button className="btn btn-outline-light" onClick={onEstadisticas}>
+                  <i className="bi bi-bar-chart me-1"></i>Estadísticas
+                </button>
+              )}
               <button
                 className="btn btn-light"
                 style={{ color: 'var(--udea-verde-oscuro)' }}

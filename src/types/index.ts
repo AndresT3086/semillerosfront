@@ -64,6 +64,8 @@ export interface InscripcionFormData {
   cedula: string;
   correo: string;
   telefono: string;
+  /** FEMENINO, MASCULINO, OTRO o vacío si prefiere no informarlo. Se usa en reportes demográficos. */
+  sexo: string;
   programa: string;
   semestre: string;
   motivacion: string;

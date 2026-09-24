@@ -48,3 +48,79 @@
 .composition-progress > span { display: block; height: 100%; border-radius: 6px; }
 .composition-tooltip { display: none; position: absolute; bottom: 100%; left: 0; background: #064d40; color: white; border-radius: 6px; padding: .55rem .7rem; font-size: .8rem; z-index: 4; }
 .composition-item:hover .composition-tooltip, .composition-item:focus-visible .composition-tooltip { display: block; }
+.report-trend.is-up { color: #287843; }
+.report-trend.is-down { color: #a23b2a; }
+.report-sort { border: 0; background: none; padding: 0; color: inherit; font-weight: inherit; white-space: nowrap; }
+.report-sort:focus-visible { outline: 2px solid #006d5b; outline-offset: 2px; }
+.report-row { cursor: pointer; }
+.report-row:hover > *, .report-row:focus-visible > * { background: #f0f7f4; }
+.report-row:focus-visible { outline: 2px solid #006d5b; outline-offset: -2px; }
+.report-state { display: inline-block; border-radius: 20px; padding: .25rem .7rem; font-size: .75rem; font-weight: 700; }
+.report-state.is-active { background: #dcefe2; color: #1d6b3a; }
+.report-state.is-inactive { background: #fdf3c4; color: #7a5d00; }
+.report-attendance { display: grid; grid-template-columns: minmax(60px, 1fr) auto; gap: .5rem; align-items: center; }
+.top-chart { width: 100%; max-height: 240px; margin-bottom: 1rem; }
+.top-chart-value { font-size: 14px; font-weight: 700; fill: #173b2b; }
+.top-list { list-style: none; padding: 0; margin: 0; display: grid; gap: .4rem; }
+.top-item { display: flex; align-items: center; gap: .7rem; width: 100%; border: 1px solid #e0eae3; background: white; border-radius: 10px; padding: .55rem .8rem; text-align: left; color: #254b3d; }
+.top-item:hover, .top-item[aria-pressed="true"] { border-color: #006d5b; background: #eff6eb; }
+.top-item:focus-visible { outline: 2px solid #006d5b; outline-offset: 2px; }
+.top-rank { display: grid; place-items: center; width: 26px; height: 26px; border-radius: 50%; color: white; font-size: .8rem; font-weight: 700; flex-shrink: 0; }
+.top-name { flex: 1; font-size: .85rem; overflow-wrap: anywhere; }
+.evolution-chart { width: 100%; height: auto; overflow: visible; }
+.evolution-grid { stroke: #e4ece7; stroke-width: 1; }
+.evolution-axis { font-size: 12px; fill: #52665a; }
+.evolution-point { fill: white; stroke: #006d5b; stroke-width: 3; cursor: pointer; }
+.evolution-point.is-projection { stroke: #9ab000; stroke-dasharray: 3 2; }
+.evolution-point:focus-visible { outline: none; stroke-width: 5; }
+.evolution-detail { font-size: .85rem; color: #254b3d; background: #f0f7f4; border-radius: 8px; padding: .6rem .8rem; margin: .75rem 0 .5rem; }
+.evolution-legend-projection { display: inline-block; width: 22px; border-top: 3px dashed #b4d400; vertical-align: middle; margin-right: .3rem; }
+.activities-stack { display: flex; height: 18px; border-radius: 9px; overflow: hidden; background: #e9efeb; margin-bottom: 1rem; }
+.activities-stack > span { display: block; height: 100%; }
+.activities-legend { list-style: none; padding: 0; margin: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: .5rem 1.25rem; }
+.activities-legend li { display: flex; align-items: center; gap: .5rem; font-size: .85rem; color: #254b3d; border-bottom: 1px solid #edf1ee; padding: .35rem 0; }
+.activities-legend strong { margin-left: auto; white-space: nowrap; }
+
+/* ── Impresión (HU11): vista optimizada del tablero ─────────────────────────── */
+.print-only { display: none; }
+@page {
+  size: A4 landscape;
+  margin: 12mm 10mm 16mm;
+  @bottom-left { content: var(--sigsi-print-footer, "SIGSI · Universidad de Antioquia"); font-size: 8pt; color: #52665a; }
+  @bottom-right { content: "Página " counter(page) " de " counter(pages); font-size: 8pt; color: #52665a; }
+}
+@media print {
+  /* RN39: sin navegación, filtros ni botones */
+  .no-print, .report-tooltip, .distribution-tooltip, .composition-tooltip, .modal, .modal-backdrop { display: none !important; }
+  .print-only { display: flex; }
+  /* RN40: gráficos nítidos (SVG/CSS) con los colores institucionales */
+  .report-page, .report-page * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  body { background: white; }
+  .report-page .admin-main { max-width: none; padding: 0; }
+  .report-page .udea-header { border-radius: 0; padding: 1rem 0; }
+  .report-page .admin-page-heading { margin: 1rem 0; }
+  .report-page .admin-card, .report-page .admin-stat { box-shadow: none; }
+  .report-avoid-break, .admin-card, .admin-stat { break-inside: avoid; }
+  .report-kpi:hover, .report-kpi:focus { transform: none; }
+  .report-print-heading { justify-content: space-between; gap: 1rem; font-size: .85rem; color: #254b3d; border-bottom: 2px solid #006d5b; padding-bottom: .5rem; margin-bottom: .75rem; }
+  .report-table-card .table-responsive { overflow: visible; }
+  /* El papel es más angosto que el breakpoint lg: se conservan las columnas de escritorio */
+  .report-page .h-100 { height: auto !important; }
+  .report-page .row > .col-xl-3 { flex: 0 0 auto; width: 25%; }
+  .report-page .row > :is(.col-lg-6, .col-xl-6) { flex: 0 0 auto; width: 50%; }
+  .report-page .row > .col-lg-4 { flex: 0 0 auto; width: 33.333%; }
+  .report-page .row > .col-lg-5 { flex: 0 0 auto; width: 41.667%; }
+  .report-page .row > .col-lg-7 { flex: 0 0 auto; width: 58.333%; }
+  .report-page .row > .col-lg-8 { flex: 0 0 auto; width: 66.667%; }
+  .report-page .admin-stat-value { font-size: 1.8rem; }
+}
+
+/* ── Actualización en tiempo real (HU13) ─────────────────────────────────────── */
+.report-live { display: inline-flex; align-items: center; gap: .45rem; font-size: .8rem; color: #52665a; margin: 0 0 .5rem; }
+.report-live-dot { width: 9px; height: 9px; border-radius: 50%; background: #b8c4bd; }
+.report-live.is-conectado .report-live-dot { background: #287843; box-shadow: 0 0 0 4px #28784322; }
+.report-live.is-error .report-live-dot { background: #c28a00; }
+.report-live-toast { position: fixed; right: 1.5rem; bottom: 1.5rem; z-index: 1080; display: flex; align-items: center; background: #064d40; color: white; border-radius: 10px; padding: .8rem 1rem; box-shadow: 0 8px 24px #0003; font-size: .9rem; animation: report-toast-in .25s ease-out; }
+@keyframes report-toast-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .report-live-toast { animation: none; } }
+.attendance-value { color: var(--udea-verde-oscuro); font-size: 2.6rem; font-weight: 750; line-height: 1.2; }

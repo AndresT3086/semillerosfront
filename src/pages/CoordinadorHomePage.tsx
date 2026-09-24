@@ -13,6 +13,8 @@ interface Props {
   correoCoordinador: string;
   onLogout: () => void;
   onOpenSemillero: (idSemillero: number) => void;
+  onReports?: () => void;
+  onOpenAsistencia?: (idSemillero: number, nombre: string) => void;
 }
 
 function estadoLabel(estado?: string | null) {
@@ -65,6 +67,8 @@ export default function CoordinadorHomePage({
   correoCoordinador,
   onLogout,
   onOpenSemillero,
+  onReports,
+  onOpenAsistencia,
 }: Props) {
   const [activeTab, setActiveTab] = useState<'semilleros' | 'solicitudes'>('semilleros');
   const [semilleros, setSemilleros] = useState<SemilleroCoordinador[]>([]);
@@ -174,9 +178,16 @@ export default function CoordinadorHomePage({
               <div className="small text-white opacity-75 mb-1">
                 <i className="bi bi-person-circle me-1"></i>{correoCoordinador}
               </div>
-              <button className="btn btn-outline-light btn-sm" onClick={onLogout}>
-                <i className="bi bi-box-arrow-left me-1"></i>Cerrar sesión
-              </button>
+              <div className="d-flex flex-wrap gap-2 justify-content-end">
+                {onReports && (
+                  <button className="btn btn-light btn-sm" style={{ color: 'var(--udea-verde-oscuro)' }} onClick={onReports}>
+                    <i className="bi bi-bar-chart me-1"></i>Ver estadísticas
+                  </button>
+                )}
+                <button className="btn btn-outline-light btn-sm" onClick={onLogout}>
+                  <i className="bi bi-box-arrow-left me-1"></i>Cerrar sesión
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -281,6 +292,11 @@ export default function CoordinadorHomePage({
                       <button className="btn-select" onClick={() => onOpenSemillero(semillero.id)}>
                         <i className="bi bi-arrow-right-circle me-1"></i>{accionPrincipal(semillero)}
                       </button>
+                      {onOpenAsistencia && semillero.estado === 'ACTIVO' && (
+                        <button className="btn-select mt-2" onClick={() => onOpenAsistencia(semillero.id, semillero.nombre || semillero.codigo)}>
+                          <i className="bi bi-clipboard-check me-1"></i>Actividades y asistencia
+                        </button>
+                      )}
                     </div>
                   </div>
                 );

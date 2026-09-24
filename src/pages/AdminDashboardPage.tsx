@@ -52,11 +52,10 @@ export default function AdminDashboardPage({ correo, preview = false, onLogout, 
   return <div className="admin-dashboard">
     <header className="udea-header"><div className="container d-flex flex-wrap align-items-center justify-content-between gap-3">
       <div><div className="udea-logo mb-1">UdeA <span>SEMILLEROS</span></div><div className="system-title">Sistema de Gestión de Semilleros · SIGSI</div><span className="sigsi-badge"><i className="bi bi-shield-check me-2" />ADMINISTRACIÓN</span></div>
-      <div className="admin-account">{correo && <span>{correo}</span>}<button className="btn btn-outline-light" onClick={onLogout}>{preview ? 'Volver al portal' : 'Cerrar sesión'}<i className="bi bi-box-arrow-right ms-2" /></button></div>
+      <div className="admin-account">{correo && <span>{correo}</span>}<div className="d-flex flex-wrap gap-2">{onReports && <button className="btn btn-light" style={{ color: 'var(--udea-verde-oscuro)' }} onClick={onReports}><i className="bi bi-bar-chart me-2" />Reportes</button>}<button className="btn btn-outline-light" onClick={onLogout}>{preview ? 'Volver al portal' : 'Cerrar sesión'}<i className="bi bi-box-arrow-right ms-2" /></button></div></div>
     </div></header>
     <main className="container admin-main">
       {preview && <div className="admin-preview" role="note"><i className="bi bi-eye me-2" /><strong>Vista previa local.</strong> Solo muestra datos públicos. La gestión administrativa aún no está habilitada.</div>}
-      {onReports && <button className="btn btn-udea mb-2" onClick={onReports}><i className="bi bi-bar-chart me-2" />Reportes y estadísticas</button>}
       <div className="admin-page-heading"><div><p className="admin-eyebrow">GESTIÓN INSTITUCIONAL</p><h1>Panel de administración</h1><p className="text-muted mb-0">Una mirada general a los semilleros de investigación de la Universidad.</p></div><button className="btn admin-outline" onClick={() => setRefresh(value => value + 1)} disabled={loading}><i className="bi bi-arrow-clockwise me-2" />Actualizar datos</button></div>
       <div className="row g-3 mb-4">{stats.map(stat => <div className="col-12 col-sm-6 col-xl-3" key={stat.label}><div className="admin-stat"><span className="admin-stat-icon"><i className={`bi bi-${stat.icon}`} /></span><div className="admin-stat-value">{stat.value}</div><h2>{stat.label}</h2><p>{stat.note}</p></div></div>)}</div>
       {catalogError && <div className="alert alert-warning" role="alert">No se pudo cargar el resumen. Usa «Actualizar datos» para reintentar.</div>}
