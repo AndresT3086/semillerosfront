@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react';
-import { aprobarSolicitud, getSolicitudesAcceso, rechazarSolicitud, type SolicitudAcceso } from '../../api/accesosApi';
+import { aprobarSolicitud, getSolicitudesAcceso, rechazarSolicitud, type ResultadoEnvio, type SolicitudAcceso } from '../../api/accesosApi';
+
+const CLASE_MENSAJE = { ok: 'alert-success', aviso: 'alert-warning', error: 'alert-danger' } as const;
 
 const fecha = (valor?: string) => valor ? new Date(valor).toLocaleString('es-CO', { dateStyle: 'medium', timeStyle: 'short' }) : '—';
 
@@ -9,7 +11,7 @@ export default function SolicitudesAccesoPanel({ token, onPendientes }: { token:
   const [estado, setEstado] = useState<{ recarga: number; solicitudes: SolicitudAcceso[]; error: boolean } | null>(null);
   const [rechazando, setRechazando] = useState<{ id: number; motivo: string; bloquear: boolean } | null>(null);
   const [procesando, setProcesando] = useState<number | null>(null);
-  const [mensaje, setMensaje] = useState<{ ok: boolean; texto: string } | null>(null);
+  const [mensaje, setMensaje] = useState<{ tipo: 'ok' | 'aviso' | 'error'; texto: string } | null>(null);
   const cargando = estado?.recarga !== recarga;
   const solicitudes = estado?.solicitudes ?? [];
 
@@ -21,12 +23,18 @@ export default function SolicitudesAccesoPanel({ token, onPendientes }: { token:
     return () => { activo = false; };
   }, [token, recarga, onPendientes]);
 
-  function ejecutar(id: number, accion: Promise<string>) {
+  function ejecutar(id: number, accion: Promise<string | ResultadoEnvio>) {
     setProcesando(id);
     setMensaje(null);
     accion
-      .then(texto => { setMensaje({ ok: true, texto }); setRechazando(null); setRecarga(v => v + 1); })
-      .catch((err: Error) => setMensaje({ ok: false, texto: err.message }))
+      .then(resultado => {
+        const texto = typeof resultado === 'string' ? resultado : resultado.mensaje;
+        const enviado = typeof resultado === 'string' || resultado.correoEnviado;
+        setMensaje({ tipo: enviado ? 'ok' : 'aviso', texto });
+        setRechazando(null);
+        setRecarga(v => v + 1);
+      })
+      .catch((err: Error) => setMensaje({ tipo: 'error', texto: err.message }))
       .finally(() => setProcesando(null));
   }
 
@@ -41,7 +49,7 @@ export default function SolicitudesAccesoPanel({ token, onPendientes }: { token:
       <span className="admin-badge">{cargando && !estado ? '…' : `${solicitudes.length} pendientes`}</span>
     </div>
     <p className="small text-muted">Solo aparecen solicitudes con el correo institucional confirmado. Al aprobar, la persona recibe un enlace para crear su contraseña.</p>
-    {mensaje && <div className={`alert ${mensaje.ok ? 'alert-success' : 'alert-danger'} py-2 small`} role={mensaje.ok ? 'status' : 'alert'}>{mensaje.texto}</div>}
+    {mensaje && <div className={`alert ${CLASE_MENSAJE[mensaje.tipo]} py-2 small`} role={mensaje.tipo === 'ok' ? 'status' : 'alert'}>{mensaje.texto}</div>}
     {estado?.error && !cargando && <div className="alert alert-warning py-2 small" role="alert">No se pudieron cargar las solicitudes.<button className="btn btn-link btn-sm" onClick={() => setRecarga(v => v + 1)}>Reintentar</button></div>}
     {cargando && !estado ? <p role="status" className="admin-loading">Cargando solicitudes…</p>
       : !solicitudes.length ? <p className="text-muted mb-0">No hay solicitudes pendientes de revisión.</p>

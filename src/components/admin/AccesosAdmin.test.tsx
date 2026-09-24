@@ -24,7 +24,7 @@ afterEach(() => vi.restoreAllMocks());
 describe('SolicitudesAccesoPanel', () => {
   it('lista las pendientes, informa el total y aprueba tras confirmar', async () => {
     const onPendientes = vi.fn();
-    vi.mocked(aprobarSolicitud).mockResolvedValue('Solicitud aprobada. Se envió el enlace de activación.');
+    vi.mocked(aprobarSolicitud).mockResolvedValue({ mensaje: 'Solicitud aprobada. Se envió el enlace de activación.', correoEnviado: true });
     vi.spyOn(window, 'confirm').mockReturnValue(true);
     render(<SolicitudesAccesoPanel token="tok" onPendientes={onPendientes} />);
     expect(await screen.findByText('Laura Gómez')).toBeInTheDocument();
@@ -60,11 +60,21 @@ describe('SolicitudesAccesoPanel', () => {
     fireEvent.click(aprobar);
     expect(await screen.findByRole('alert')).toHaveTextContent('Ya existe una cuenta');
   });
+
+  it('advierte cuando la solicitud se aprobó pero el correo no salió', async () => {
+    vi.spyOn(window, 'confirm').mockReturnValue(true);
+    vi.mocked(aprobarSolicitud).mockResolvedValue({ mensaje: 'La solicitud quedó aprobada, pero no se pudo enviar el correo de activación.', correoEnviado: false });
+    render(<SolicitudesAccesoPanel token="tok" />);
+    fireEvent.click(await screen.findByRole('button', { name: 'Aprobar a Laura Gómez' }));
+    const aviso = await screen.findByRole('alert');
+    expect(aviso).toHaveTextContent('no se pudo enviar el correo de activación');
+    expect(aviso).toHaveClass('alert-warning');
+  });
 });
 
 describe('InvitarCoordinadorForm', () => {
   it('solo invita correos @udea.edu.co y confirma el envío', async () => {
-    vi.mocked(invitarCoordinador).mockResolvedValue('Invitación enviada.');
+    vi.mocked(invitarCoordinador).mockResolvedValue({ mensaje: 'Invitación enviada.', correoEnviado: true });
     render(<InvitarCoordinadorForm token="tok" />);
     fireEvent.change(screen.getByLabelText('Nombres'), { target: { value: 'Pedro' } });
     fireEvent.change(screen.getByLabelText('Apellidos'), { target: { value: 'Ruiz' } });
@@ -89,5 +99,19 @@ describe('InvitarCoordinadorForm', () => {
     fireEvent.change(screen.getByLabelText('Correo institucional'), { target: { value: 'laura.gomez@udea.edu.co' } });
     fireEvent.click(screen.getByRole('button', { name: 'Invitar' }));
     expect(await screen.findByRole('alert')).toHaveTextContent('Ya existe una cuenta activa');
+  });
+
+  it('advierte si el correo no salió y conserva los datos para reintentar', async () => {
+    vi.mocked(invitarCoordinador).mockResolvedValue({ mensaje: 'La invitación quedó registrada, pero no se pudo enviar el correo.', correoEnviado: false });
+    render(<InvitarCoordinadorForm token="tok" />);
+    fireEvent.change(screen.getByLabelText('Nombres'), { target: { value: 'Pedro' } });
+    fireEvent.change(screen.getByLabelText('Apellidos'), { target: { value: 'Ruiz' } });
+    fireEvent.change(screen.getByLabelText('Correo institucional'), { target: { value: 'pedro.ruiz@udea.edu.co' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Invitar' }));
+    const aviso = await screen.findByRole('alert');
+    expect(aviso).toHaveTextContent('no se pudo enviar el correo');
+    expect(aviso).toHaveClass('alert-warning');
+    expect(screen.queryByText(/tiene 24 horas/)).not.toBeInTheDocument();
+    expect(screen.getByLabelText('Correo institucional')).toHaveValue('pedro.ruiz@udea.edu.co');
   });
 });

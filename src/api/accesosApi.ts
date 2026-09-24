@@ -35,9 +35,10 @@ export interface SolicitudAcceso {
   bloqueada: boolean;
 }
 
-export interface InvitacionEnviada { idUsuario: number; correo: string; expira: string; reenviada: boolean }
+/** Resultado de aprobar o invitar: la cuenta queda registrada aunque el correo no haya salido. */
+export interface ResultadoEnvio { mensaje: string; correoEnviado: boolean }
 
-async function mensaje(path: string, options: RequestInit): Promise<string> {
+async function respuesta(path: string, options: RequestInit): Promise<{ mensaje?: string; datos?: { correoEnviado?: boolean } }> {
   const res = await fetch(`${BASE_URL}${path}`, options);
   const body = await res.json().catch(() => ({}));
   if (!res.ok) {
@@ -45,7 +46,16 @@ async function mensaje(path: string, options: RequestInit): Promise<string> {
       ? Object.values(body.datos).filter((v): v is string => typeof v === 'string') : [];
     throw new Error(validaciones.length ? validaciones.join(' ') : body.mensaje ?? `Error ${res.status}`);
   }
-  return body.mensaje ?? '';
+  return body;
+}
+
+async function mensaje(path: string, options: RequestInit): Promise<string> {
+  return (await respuesta(path, options)).mensaje ?? '';
+}
+
+async function resultadoEnvio(path: string, options: RequestInit): Promise<ResultadoEnvio> {
+  const body = await respuesta(path, options);
+  return { mensaje: body.mensaje ?? '', correoEnviado: body.datos?.correoEnviado !== false };
 }
 
 function post(body: unknown, token?: string): RequestInit {
@@ -76,16 +86,16 @@ export async function contarSolicitudesPendientes(token: string): Promise<number
   return resumen.pendientes;
 }
 
-export function aprobarSolicitud(id: number, token: string): Promise<string> {
-  return mensaje(`/api/v1/admin/solicitudes-acceso/${id}/aprobar`, post({}, token));
+export function aprobarSolicitud(id: number, token: string): Promise<ResultadoEnvio> {
+  return resultadoEnvio(`/api/v1/admin/solicitudes-acceso/${id}/aprobar`, post({}, token));
 }
 
 export function rechazarSolicitud(id: number, motivo: string, bloquear: boolean, token: string): Promise<string> {
   return mensaje(`/api/v1/admin/solicitudes-acceso/${id}/rechazar`, post({ motivo, bloquear }, token));
 }
 
-export function invitarCoordinador(datos: { nombres: string; apellidos: string; correo: string }, token: string): Promise<string> {
-  return mensaje('/api/v1/admin/invitaciones', post(datos, token));
+export function invitarCoordinador(datos: { nombres: string; apellidos: string; correo: string }, token: string): Promise<ResultadoEnvio> {
+  return resultadoEnvio('/api/v1/admin/invitaciones', post(datos, token));
 }
 
 export const DOMINIO_INSTITUCIONAL = '@udea.edu.co';
