@@ -545,3 +545,6 @@ body {
     width: 100%;
   }
 }
+
+/* Campo trampa del formulario de solicitud de acceso: fuera de la vista y de la navegación */
+.solicitud-trampa { position: absolute; left: -10000px; width: 1px; height: 1px; overflow: hidden; }

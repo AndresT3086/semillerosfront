@@ -1,4 +1,4 @@
-import { apiFetch, authHeaders } from './semillerosApi';
+import { apiFetch, authHeaders, BASE_URL } from './semillerosApi';
 
 // Registro de coordinadores: solicitud pública, confirmación de correo, activación de cuenta
 // y administración de solicitudes e invitaciones (solo ADMIN).
@@ -38,7 +38,7 @@ export interface SolicitudAcceso {
 export interface InvitacionEnviada { idUsuario: number; correo: string; expira: string; reenviada: boolean }
 
 async function mensaje(path: string, options: RequestInit): Promise<string> {
-  const res = await fetch(`${import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8080'}${path}`, options);
+  const res = await fetch(`${BASE_URL}${path}`, options);
   const body = await res.json().catch(() => ({}));
   if (!res.ok) {
     const validaciones = body.datos && typeof body.datos === 'object'
