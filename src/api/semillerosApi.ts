@@ -362,3 +362,16 @@ export async function finalizarCaracterizacion(
     },
   );
 }
+
+// HU01: fuente pública provisional. Solo representa semilleros ACTIVO;
+// no permite inferir usuarios únicos, participación ni tendencias históricas.
+export async function getReportesDisponibles(
+  idUnidad = '',
+  pagina = 0,
+): Promise<PageResponse<SemilleroResumen>> {
+  const params = new URLSearchParams({ pagina: String(pagina), tamano: '10' });
+  if (idUnidad) params.set('idUnidad', idUnidad);
+  return apiFetch<PageResponse<SemilleroResumen>>(`/api/v1/semilleros?${params}`, {
+    cache: 'no-store',
+  });
+}

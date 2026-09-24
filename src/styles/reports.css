@@ -1,0 +1,12 @@
+.report-kpi { position: relative; outline-offset: 4px; transition: box-shadow .2s, transform .2s; }
+.report-kpi:hover, .report-kpi:focus { box-shadow: 0 8px 24px #006d5b18; transform: translateY(-2px); }
+.report-kpi:focus-visible { outline: 2px solid var(--udea-verde-oscuro); }
+.report-trend { font-size: .75rem; color: #596b61; margin-top: 1rem; border-top: 1px solid #edf1ee; padding-top: .75rem; }
+.report-tooltip { display: none; position: absolute; bottom: calc(100% + 8px); left: 0; right: 0; padding: .85rem; border-radius: 8px; background: #064d40; color: white; font-size: .8rem; z-index: 5; box-shadow: 0 4px 12px #0002; }
+.report-kpi:hover .report-tooltip, .report-kpi:focus .report-tooltip { display: block; }
+.report-status { font-size: .85rem; color: #596b61; margin: 0 0 1rem; }
+.report-availability { background: #eaf2ed; border-radius: 10px; padding: 1rem; color: #385b4d; font-size: .85rem; margin-bottom: 1.5rem; }
+.report-table th { color: var(--udea-verde-oscuro); }
+.report-table thead th { background: #f0f7f4; white-space: nowrap; }
+.report-table td, .report-table th { padding: 1rem .75rem; }
+@media (prefers-reduced-motion: reduce) { .report-kpi { transition: none; transform: none !important; } }

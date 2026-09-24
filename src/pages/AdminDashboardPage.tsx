@@ -12,7 +12,7 @@ function Pending({ children }: { children: ReactNode }) {
   return <div className="admin-pending"><i className="bi bi-hourglass-split" aria-hidden="true" /><div><strong>Próximamente</strong><p>{children}</p></div></div>;
 }
 
-export default function AdminDashboardPage({ correo, preview = false, onLogout }: { correo?: string; preview?: boolean; onLogout: () => void }) {
+export default function AdminDashboardPage({ correo, preview = false, onLogout, onReports }: { correo?: string; preview?: boolean; onLogout: () => void; onReports?: () => void }) {
   const [unidades, setUnidades] = useState<FiltroItem[]>([]);
   const [catalogError, setCatalogError] = useState(false);
   const [total, setTotal] = useState<number | null>(null);
@@ -56,6 +56,7 @@ export default function AdminDashboardPage({ correo, preview = false, onLogout }
     </div></header>
     <main className="container admin-main">
       {preview && <div className="admin-preview" role="note"><i className="bi bi-eye me-2" /><strong>Vista previa local.</strong> Solo muestra datos públicos. La gestión administrativa aún no está habilitada.</div>}
+      {onReports && <button className="btn btn-udea mb-2" onClick={onReports}><i className="bi bi-bar-chart me-2" />Reportes y estadísticas</button>}
       <div className="admin-page-heading"><div><p className="admin-eyebrow">GESTIÓN INSTITUCIONAL</p><h1>Panel de administración</h1><p className="text-muted mb-0">Una mirada general a los semilleros de investigación de la Universidad.</p></div><button className="btn admin-outline" onClick={() => setRefresh(value => value + 1)} disabled={loading}><i className="bi bi-arrow-clockwise me-2" />Actualizar datos</button></div>
       <div className="row g-3 mb-4">{stats.map(stat => <div className="col-12 col-sm-6 col-xl-3" key={stat.label}><div className="admin-stat"><span className="admin-stat-icon"><i className={`bi bi-${stat.icon}`} /></span><div className="admin-stat-value">{stat.value}</div><h2>{stat.label}</h2><p>{stat.note}</p></div></div>)}</div>
       {catalogError && <div className="alert alert-warning" role="alert">No se pudo cargar el resumen. Usa «Actualizar datos» para reintentar.</div>}
