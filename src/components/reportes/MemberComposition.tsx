@@ -1,5 +1,4 @@
 import { useId } from 'react';
-import type { ReportFilters } from '../../reports/filters';
 
 // Las categorías y sus cantidades deben proceder del agregado del backend.
 // Roles: porcentajes sobre asignaciones; no se presentan como personas únicas.
@@ -17,12 +16,13 @@ export function CompositionChart({ items, kind }: { items: CompositionCategory[]
   const available = valid(items);
   const rows = available ? items : (kind === 'sexo' ? ['Femenino', 'Masculino'] : PENDING_ROLES).map(nombre => ({ id: nombre, nombre, cantidad: null }));
   const total = available ? items.reduce((sum, row) => sum + row.cantidad, 0) : null;
-  let offset = 0;
-  const portions = rows.map((row, index) => {
-    const percent = total && row.cantidad !== null ? row.cantidad / total * 100 : 0;
-    const start = offset; offset += percent;
-    return { ...row, percent, start, color: COLORS[index % COLORS.length] };
-  });
+  const percents = rows.map(row => total && row.cantidad !== null ? row.cantidad / total * 100 : 0);
+  const portions = rows.map((row, index) => ({
+    ...row,
+    percent: percents[index],
+    start: percents.slice(0, index).reduce((sum, value) => sum + value, 0),
+    color: COLORS[index % COLORS.length],
+  }));
   return <div className="composition-chart">
     {!available && <p className="composition-notice" role="status">Datos no disponibles para la selección aplicada.</p>}
     {kind === 'sexo' && <svg viewBox="0 0 300 260" className="composition-donut" role="img" aria-label={total === null ? 'Distribución por sexo no disponible' : `Distribución por sexo: ${total} integrantes`}>
@@ -36,19 +36,16 @@ export function CompositionChart({ items, kind }: { items: CompositionCategory[]
       <div className="composition-progress" role={row.cantidad === null ? undefined : 'progressbar'} aria-label={row.nombre} aria-valuemin={row.cantidad === null ? undefined : 0} aria-valuemax={row.cantidad === null ? undefined : 100} aria-valuenow={row.cantidad === null ? undefined : row.percent} aria-valuetext={row.cantidad === null ? undefined : `${row.cantidad}; ${format(row.percent)} %`}><span style={{ width: `${row.percent}%`, backgroundColor: row.color }} /></div>
       <span className="composition-tooltip" id={`${tooltipId}-${index}`} role="tooltip">{row.nombre}: {row.cantidad === null ? 'cantidad y porcentaje no disponibles' : `${row.cantidad}; ${format(row.percent)} %`}</span>
     </li>)}</ul>
-    <p className="text-muted small mt-3 mb-0">{kind === 'sexo' ? 'Los valores deben proceder del campo sexo. No se infieren a partir de nombres.' : 'Porcentajes sobre el total de asignaciones de rol de la selección. Una persona puede tener más de un rol.'}</p>
+    <p className="text-muted small mt-3 mb-0">{kind === 'sexo' ? 'Personas activas únicas según el sexo informado en su inscripción.' : 'Porcentajes sobre el total de asignaciones de rol de la selección. Una persona puede tener más de un rol.'}</p>
   </div>;
 }
 
-export default function MemberComposition({ filters }: { filters: ReportFilters }) {
-  // No se consulta una ruta ficticia: aún no existe fuente para RN16/RN17.
-  // Al implementar el endpoint, su respuesta debe corresponder a todos estos filtros.
-  const scope = [filters.periodo || 'Estado actual', filters.tipoUnidad || 'Todos los tipos', filters.idUnidad ? `Unidad #${filters.idUnidad}` : 'Todas las unidades', filters.idCampus ? `Campus #${filters.idCampus}` : 'Todos los campus', filters.idSemillero ? `Semillero #${filters.idSemillero}` : 'Todos los semilleros'].join(' · ');
-  return <section aria-label="Composición de integrantes" className="mb-4">
-    <p className="small text-muted" aria-live="polite">Composición para: {scope}</p>
+// HU5: composición por sexo (personas únicas) y por rol desempeñado (asignaciones).
+export default function MemberComposition({ sexo, roles }: { sexo: CompositionCategory[]; roles: CompositionCategory[] }) {
+  return <section aria-label="Composición de integrantes" className="mb-4 report-avoid-break">
     <div className="row g-4">
-      <div className="col-lg-6"><section className="admin-card h-100 mb-0" aria-labelledby="sex-title"><div className="admin-section-heading"><h2 id="sex-title"><i className="bi bi-pie-chart" aria-hidden="true" />Integrantes por Sexo</h2><span className="admin-badge">Pendiente de datos</span></div><CompositionChart items={null} kind="sexo" /></section></div>
-      <div className="col-lg-6"><section className="admin-card h-100 mb-0" aria-labelledby="roles-title"><div className="admin-section-heading"><h2 id="roles-title"><i className="bi bi-people" aria-hidden="true" />Integrantes según Rol Desempeñado</h2><span className="admin-badge">Pendiente de datos</span></div><CompositionChart items={null} kind="roles" /><p className="text-muted small mt-3">Categorías solicitadas para esta vista; pendientes de confirmar con el catálogo de roles del sistema.</p></section></div>
+      <div className="col-lg-6"><section className="admin-card h-100 mb-0" aria-labelledby="sex-title"><div className="admin-section-heading"><h2 id="sex-title"><i className="bi bi-pie-chart" aria-hidden="true" />Integrantes por Sexo</h2><span className="admin-badge">Integrantes activos</span></div><CompositionChart items={sexo} kind="sexo" /></section></div>
+      <div className="col-lg-6"><section className="admin-card h-100 mb-0" aria-labelledby="roles-title"><div className="admin-section-heading"><h2 id="roles-title"><i className="bi bi-people" aria-hidden="true" />Integrantes según Rol Desempeñado</h2><span className="admin-badge">Catálogo de roles</span></div><CompositionChart items={roles} kind="roles" /></section></div>
     </div>
   </section>;
 }

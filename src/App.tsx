@@ -1,17 +1,15 @@
 import { useEffect, useState } from 'react';
 import type { LoginResponse } from './types';
 import HomePage from './pages/HomePage';
-import AdminReportsPage from './pages/AdminReportsPage';
+import ReportsPage from './pages/ReportsPage';
 import AdminDashboardPage from './pages/AdminDashboardPage';
-import { REPORT_FILTERS_KEY } from './reports/filters';
+import { clearReportFilters } from './reports/filters';
 import { isAdminToken } from './auth/role';
 import LoginPage from './pages/LoginPage';
 import CoordinadorHomePage from './pages/CoordinadorHomePage';
 import CaracterizacionPage from './pages/CaracterizacionPage';
 
 type View = 'home' | 'login' | 'coordinador' | 'caracterizacion' | 'admin' | 'reportes';
-
-const ADMIN_PREVIEW = import.meta.env.DEV && ['admin', 'reportes'].includes(new URLSearchParams(window.location.search).get('vista') ?? '');
 
 const AUTH_STORAGE_KEY = 'sigsi_auth';
 const SELECTED_SEMILLERO_KEY = 'sigsi_selected_semillero';
@@ -53,7 +51,6 @@ export default function App() {
   const [selectedSemilleroId, setSelectedSemilleroId] = useState<number | null>(() => readStoredSemilleroId());
   const [view, setView] = useState<View>(() => {
     const storedAuth = readStoredAuth();
-    if (ADMIN_PREVIEW) return new URLSearchParams(window.location.search).get('vista') === 'reportes' ? 'reportes' : 'admin';
     if (!storedAuth) return 'home';
     if (isAdminToken(storedAuth.token)) return 'admin';
     return readStoredSemilleroId() != null ? 'caracterizacion' : 'coordinador';
@@ -61,7 +58,7 @@ export default function App() {
   const [sessionMessage, setSessionMessage] = useState<string | null>(null);
 
   function handleLoginSuccess(response: LoginResponse) {
-    sessionStorage.removeItem(REPORT_FILTERS_KEY);
+    clearReportFilters();
     sessionStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(response));
     sessionStorage.setItem(LAST_ACTIVITY_KEY, Date.now().toString());
     sessionStorage.removeItem(SELECTED_SEMILLERO_KEY);
@@ -72,7 +69,7 @@ export default function App() {
   }
 
   function handleLogout(message?: string) {
-    sessionStorage.removeItem(REPORT_FILTERS_KEY);
+    clearReportFilters();
     clearStoredSession();
     setAuth(null);
     setSelectedSemilleroId(null);
@@ -114,22 +111,13 @@ export default function App() {
     };
   }, [auth]);
 
-  if (view === 'reportes' && (ADMIN_PREVIEW || (auth && isAdminToken(auth.token)))) {
-    return <AdminReportsPage token={ADMIN_PREVIEW ? undefined : auth?.token} preview={ADMIN_PREVIEW} onBack={() => setView('admin')} onLogout={() => {
-      window.history.replaceState(null, '', window.location.pathname);
-      handleLogout();
-    }} />;
+  if (view === 'reportes' && auth && isAdminToken(auth.token)) {
+    return <ReportsPage alcance="ADMIN" token={auth.token} correo={auth.correo}
+      onBack={() => { clearReportFilters(); setView('admin'); }} onLogout={() => handleLogout()} />;
   }
 
-  if (view === 'admin' && (ADMIN_PREVIEW || (auth && isAdminToken(auth.token)))) {
-    return <AdminDashboardPage onReports={() => setView('reportes')} correo={auth?.correo} preview={ADMIN_PREVIEW} onLogout={() => {
-      if (ADMIN_PREVIEW) {
-        window.history.replaceState(null, '', window.location.pathname);
-        setView('home');
-      } else {
-        handleLogout();
-      }
-    }} />;
+  if (view === 'admin' && auth && isAdminToken(auth.token)) {
+    return <AdminDashboardPage onReports={() => setView('reportes')} correo={auth.correo} onLogout={() => handleLogout()} />;
   }
 
   if (view === 'login') {
