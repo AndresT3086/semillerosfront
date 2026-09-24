@@ -90,7 +90,7 @@ export default function LoginPage({ onLoginSuccess, onBack }: LoginPageProps) {
                 <i className="bi bi-shield-lock-fill text-white fs-4"></i>
               </div>
               <h4 className="fw-bold mb-0" style={{ color: 'var(--udea-verde-oscuro)' }}>
-                Acceso Coordinadores
+                Acceso SIGSI
               </h4>
               <p className="text-muted small mt-1 mb-0">Ingrese con su cuenta institucional</p>
             </div>

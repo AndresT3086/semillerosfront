@@ -7,7 +7,7 @@ interface DetailsModalProps {
   semilleroId: number | null;
   isOpen: boolean;
   onClose: () => void;
-  onInscribirse: (id: number, nombre: string) => void;
+  onInscribirse?: (id: number, nombre: string) => void;
 }
 
 function mockOdsPorArea(areaOcde?: string) {
@@ -206,7 +206,7 @@ export default function DetailsModal({
             <button type="button" className="btn btn-secondary" data-bs-dismiss="modal">
               Cerrar
             </button>
-            {detalle && (
+            {detalle && onInscribirse && (
               <button
                 type="button"
                 className="btn btn-udea"

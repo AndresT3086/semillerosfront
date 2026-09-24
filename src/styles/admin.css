@@ -1,0 +1,37 @@
+.admin-dashboard { min-height: 100vh; }
+.admin-dashboard .udea-header { border-radius: 0 0 24px 24px; }
+.admin-main { max-width: 1320px; padding-bottom: 2rem; }
+.admin-account { display: flex; flex-direction: column; align-items: flex-end; gap: .7rem; overflow-wrap: anywhere; }
+.admin-page-heading { display: flex; align-items: center; justify-content: space-between; gap: 1.5rem; margin: 2rem 0; }
+.admin-page-heading h1 { color: var(--udea-verde-oscuro); font-size: clamp(1.6rem, 3vw, 2.1rem); font-weight: 750; }
+.admin-eyebrow { color: var(--udea-verde-oscuro); font-size: .75rem; font-weight: 700; letter-spacing: .13em; margin-bottom: .5rem; }
+.admin-preview { padding: .9rem 1.2rem; border: 1px solid var(--udea-gris); background: #fff; border-radius: 10px; color: var(--udea-verde-oscuro); font-size: .9rem; }
+.admin-stat, .admin-card { background: white; border: 1px solid #e0eae3; box-shadow: 0 4px 18px #006d5b07; border-radius: 16px; padding: 1.5rem; }
+.admin-stat { height: 100%; position: relative; border-top: 3px solid var(--udea-verde-principal); }
+.admin-stat-icon { position: absolute; right: 1.25rem; top: 1.25rem; width: 42px; height: 42px; background: var(--udea-gris-claro); color: var(--udea-verde-oscuro); display: grid; place-items: center; border-radius: 12px; font-size: 1.25rem; }
+.admin-stat-value { color: var(--udea-verde-oscuro); font-size: 2.4rem; font-weight: 750; line-height: 1.3; margin-bottom: .6rem; }
+.admin-stat h2 { font-size: 1rem; font-weight: 650; }
+.admin-stat p { font-size: .8rem; color: #64716c; margin: 0; }
+.admin-card { margin-bottom: 1.5rem; }
+.admin-section-heading { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: .75rem; padding-bottom: 1rem; margin-bottom: 1.25rem; border-bottom: 1px solid var(--udea-gris); }
+.admin-section-heading h2 { color: var(--udea-verde-oscuro); display: flex; gap: .65rem; align-items: center; font-size: 1.15rem; font-weight: 700; margin: 0; }
+.admin-subtitle { font-size: .9rem; font-weight: 650; }
+.admin-badge { display: inline-block; background: #eef5e8; color: #365b25; border-radius: 20px; padding: .3rem .7rem; font-size: .73rem; font-weight: 600; }
+.admin-pending { display: flex; gap: .9rem; background: #f6f9f7; border: 1px dashed var(--udea-gris); border-radius: 10px; padding: 1.25rem; color: #576960; }
+.admin-pending > i { font-size: 1.3rem; color: var(--udea-verde-principal); }
+.admin-pending strong { font-size: .88rem; }
+.admin-pending p { margin: .3rem 0 0; font-size: .86rem; line-height: 1.6; }
+.admin-dashboard .admin-outline { border: 1px solid var(--udea-verde-oscuro); color: var(--udea-verde-oscuro); border-radius: 8px; white-space: nowrap; }
+.admin-dashboard .admin-outline:hover:not(:disabled) { background: var(--udea-verde-oscuro); color: white; }
+.admin-dashboard .admin-outline:disabled { opacity: .5; }
+.admin-dashboard :is(input, select):focus { border-color: var(--udea-verde-principal); box-shadow: 0 0 0 .2rem #7c964025; }
+.admin-semillero-list { list-style: none; padding: 0; margin: 0; }
+.admin-semillero-list li { display: flex; align-items: center; gap: 1rem; padding: 1.1rem 0; border-bottom: 1px solid #edf1ee; }
+.admin-tree { background: var(--udea-gris-claro); color: var(--udea-verde-oscuro); border-radius: 12px; padding: .7rem; font-size: 1.3rem; }
+.admin-semillero-info { flex: 1; min-width: 0; }
+.admin-semillero-info h3 { font-size: .98rem; font-weight: 650; overflow-wrap: anywhere; }
+.admin-semillero-info p { font-size: .8rem; color: #64716c; margin-bottom: .5rem; }
+.admin-pagination { display: flex; justify-content: space-between; align-items: center; gap: .5rem; margin-top: 1.5rem; font-size: .8rem; }
+.admin-loading { text-align: center; padding: 2rem 0; color: #64716c; }
+.admin-footnote { padding: 0 .5rem; color: #64716c; font-size: .82rem; line-height: 1.7; }
+@media (max-width: 575px) { .admin-page-heading { align-items: flex-start; flex-direction: column; } .admin-card { padding: 1rem; } .admin-semillero-list li { flex-wrap: wrap; } .admin-tree { display: none; } .admin-account { align-items: flex-start; } }
