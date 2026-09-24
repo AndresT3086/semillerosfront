@@ -31,3 +31,18 @@ it('consulta solo el detalle seleccionado y no cuenta un semillero inactivo como
   expect(result.contenido).toEqual([]);
   expect(result.totalElementos).toBe(0);
 });
+
+it('obtiene conteos por IDs oficiales sin convertir datos ausentes en estudiantes', async () => {
+  const { getDistribucionDisponible } = await import('./semillerosApi');
+  const fetchMock = vi.fn().mockImplementation(async (url: string) => {
+    if (url.includes('/filtros/')) return response([{ id: 8, nombre: 'Artes' }, { id: 9, nombre: 'Instituto' }]);
+    const id = new URL(url).searchParams.get('idUnidad');
+    return response({ ...page([]), totalElementos: id === '8' ? 25 : 0 });
+  });
+  vi.stubGlobal('fetch', fetchMock);
+  expect(await getDistribucionDisponible()).toEqual([
+    { id: 8, nombre: 'Artes', semilleros: 25, estudiantes: null },
+    { id: 9, nombre: 'Instituto', semilleros: 0, estudiantes: null },
+  ]);
+  expect(fetchMock).toHaveBeenCalledTimes(3);
+});

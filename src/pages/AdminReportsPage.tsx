@@ -2,6 +2,7 @@ import { useEffect, useId, useState } from 'react';
 import { getReportesDisponibles, getUnidades, getCatalogoReportes, getReporteSemillero } from '../api/semillerosApi';
 import type { FiltroItem, PageResponse, SemilleroResumen } from '../types';
 import { EMPTY_FILTERS, REPORT_FILTERS_KEY, readReportFilters } from '../reports/filters';
+import UnitDistribution from '../components/reportes/UnitDistribution';
 import Footer from '../components/Footer';
 import '../styles/admin.css';
 import '../styles/reports.css';
@@ -114,6 +115,12 @@ export default function AdminReportsPage({ preview = false, onBack, onLogout }: 
         <div className="col-sm-6 col-xl-3"><KpiCard label="Tasa de participación" icon="pie-chart" value={null} note="Miembros activos / registrados × 100." loading={false} /></div>
       </section>
       <p className="report-availability"><i className="bi bi-info-circle me-2" aria-hidden="true" />«—» indica información no disponible, no un valor de cero. Las comparaciones estarán disponibles cuando existan datos del período anterior.</p>
+      <UnitDistribution revision={revision} selectedId={applied.idUnidad} unsupported={unsupported} selectedSemillero={Boolean(applied.idSemillero)} onSelect={idUnidad => {
+        const next = { ...applied, idUnidad, idSemillero: '' };
+        setFilters(next);
+        setApplied(next);
+        setPagina(0);
+      }} />
       <section className="admin-card" aria-labelledby="report-detail"><div className="admin-section-heading"><h2 id="report-detail"><i className="bi bi-table" aria-hidden="true" />Detalle disponible por semillero</h2><span className="admin-badge">Catálogo activo</span></div><p className="text-muted small">Las actividades son las registradas como realizadas en cada semillero, sin filtro de período. No equivalen al total institucional ni al número de eventos de un mes.</p>
         {loading ? <p role="status">Cargando detalle…</p> : error ? <p>No hay detalle disponible en esta consulta.</p> : unsupported ? <p>Selecciona «Estado actual» y «Todas las unidades» para consultar los datos disponibles.</p> : !data?.contenido.length ? <p>No se encontraron semilleros activos para esta selección.</p> : <><div className="table-responsive"><table className="table report-table"><caption>Resultados para {unidades.find(item => String(item.id) === applied.idUnidad)?.nombre ?? 'todas las unidades'}</caption><thead><tr><th scope="col">Semillero</th><th scope="col">Unidad académica</th><th scope="col">Campus</th><th scope="col">Actividades realizadas</th></tr></thead><tbody>{data.contenido.map(item => <tr key={item.id}><th scope="row">{item.nombre}</th><td>{item.facultad}</td><td>{item.campus}</td><td>{item.totalActividadesCientificas ?? '—'}</td></tr>)}</tbody></table></div><nav className="admin-pagination" aria-label="Paginación de reportes"><button className="btn admin-outline" disabled={data.esPrimeraPagina} onClick={() => setPagina(value => value - 1)}>Anterior</button><span>Página {data.paginaActual + 1} de {data.totalPaginas}</span><button className="btn admin-outline" disabled={data.esUltimaPagina} onClick={() => setPagina(value => value + 1)}>Siguiente</button></nav></>}
       </section>

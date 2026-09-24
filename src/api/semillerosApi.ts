@@ -394,3 +394,30 @@ export async function getReporteSemillero(id: string): Promise<PageResponse<Semi
   return { contenido, totalElementos: contenido.length, totalPaginas: contenido.length ? 1 : 0,
     paginaActual: 0, tamano: 1, esPrimeraPagina: true, esUltimaPagina: true };
 }
+
+export interface DistribucionUnidad {
+  id: number;
+  nombre: string;
+  semilleros: number;
+  estudiantes: number | null;
+}
+
+// Conteos SQL del catálogo público por ID real de unidad. No se deduce el tipo
+// desde el nombre ni se suman membresías como si fueran estudiantes únicos.
+export async function getDistribucionDisponible(signal?: AbortSignal): Promise<DistribucionUnidad[]> {
+  const unidades = await apiFetch<FiltroItem[]>('/api/v1/filtros/unidades-academicas', { signal });
+  const result: DistribucionUnidad[] = new Array(unidades.length);
+  let next = 0;
+  // Limitar concurrencia mientras no exista un endpoint agregado.
+  await Promise.all(Array.from({ length: Math.min(4, unidades.length) }, async () => {
+    while (next < unidades.length) {
+      const index = next++;
+      const unidad = unidades[index];
+      const params = new URLSearchParams({ idUnidad: String(unidad.id), pagina: '0', tamano: '1' });
+      const page = await apiFetch<PageResponse<SemilleroResumen>>(`/api/v1/semilleros?${params}`, { signal, cache: 'no-store' });
+      if (!Number.isInteger(page.totalElementos) || page.totalElementos < 0) throw new Error('Conteo de unidad inválido');
+      result[index] = { id: unidad.id, nombre: unidad.nombre, semilleros: page.totalElementos, estudiantes: null };
+    }
+  }));
+  return result.sort((a, b) => b.semilleros - a.semilleros || a.nombre.localeCompare(b.nombre, 'es'));
+}

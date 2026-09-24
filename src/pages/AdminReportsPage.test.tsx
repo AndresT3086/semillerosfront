@@ -1,12 +1,13 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, expect, it, vi } from 'vitest';
-import { getReportesDisponibles, getUnidades, getCatalogoReportes, getReporteSemillero } from '../api/semillerosApi';
+import { getReportesDisponibles, getUnidades, getCatalogoReportes, getReporteSemillero, getDistribucionDisponible } from '../api/semillerosApi';
 import AdminReportsPage from './AdminReportsPage';
-vi.mock('../api/semillerosApi', () => ({ getReportesDisponibles: vi.fn(), getUnidades: vi.fn(), getCatalogoReportes: vi.fn(), getReporteSemillero: vi.fn() }));
+vi.mock('../api/semillerosApi', () => ({ getReportesDisponibles: vi.fn(), getUnidades: vi.fn(), getCatalogoReportes: vi.fn(), getReporteSemillero: vi.fn(), getDistribucionDisponible: vi.fn() }));
 const page = { contenido: [], totalElementos: 23, paginaActual: 0, totalPaginas: 3, tamano: 10, esPrimeraPagina: true, esUltimaPagina: false };
 beforeEach(() => {
   vi.resetAllMocks();
   sessionStorage.clear();
+  vi.mocked(getDistribucionDisponible).mockResolvedValue([]);
   vi.mocked(getCatalogoReportes).mockResolvedValue([]);
   vi.mocked(getReportesDisponibles).mockResolvedValue(page);
   vi.mocked(getUnidades).mockResolvedValue([{ id: 2, nombre: 'Ingeniería', siglas: 'ING' }]);
@@ -60,4 +61,16 @@ it('consulta exclusivamente el semillero seleccionado', async () => {
   await waitFor(() => expect(getReporteSemillero).toHaveBeenCalledWith('4'));
   expect(await screen.findByRole('rowheader', { name: 'Robótica' })).toBeInTheDocument();
   expect(screen.queryByText('23')).not.toBeInTheDocument();
+});
+
+it('aplica la unidad de la barra a la API y persiste el filtro', async () => {
+  vi.mocked(getDistribucionDisponible).mockResolvedValue([{ id: 2, nombre: 'Ingeniería', semilleros: 3, estudiantes: null }]);
+  render(<AdminReportsPage onBack={() => {}} onLogout={() => {}} />);
+  const bar = await screen.findByRole('button', { name: 'Ingeniería 3' });
+  fireEvent.click(bar);
+  await waitFor(() => expect(getReportesDisponibles).toHaveBeenLastCalledWith('2', 0));
+  expect(screen.getByLabelText('Unidad académica')).toHaveValue('2');
+  expect(JSON.parse(sessionStorage.getItem('sigsi_report_filters')!).idUnidad).toBe('2');
+  fireEvent.click(screen.getByRole('button', { name: 'Ver todas las unidades' }));
+  await waitFor(() => expect(getReportesDisponibles).toHaveBeenLastCalledWith('', 0));
 });

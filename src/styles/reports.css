@@ -10,3 +10,18 @@
 .report-table thead th { background: #f0f7f4; white-space: nowrap; }
 .report-table td, .report-table th { padding: 1rem .75rem; }
 @media (prefers-reduced-motion: reduce) { .report-kpi { transition: none; transform: none !important; } }
+.distribution-axis { display: flex; justify-content: space-between; color: #52665a; font-size: .75rem; margin: 1rem 0 .5rem; }
+.distribution-bars { list-style: none; padding: 0; margin: 0; }
+.distribution-row { width: 100%; display: grid; grid-template-columns: minmax(120px, 1fr) minmax(70px, 1fr) 2.5rem; align-items: center; gap: .75rem; position: relative; background: white; border: 1px solid transparent; border-bottom-color: #e9f0eb; padding: .7rem .4rem; text-align: left; border-radius: 6px; color: #254b3d; }
+.distribution-row:hover, .distribution-row[aria-pressed="true"] { background: #eff6eb; border-color: #7c9640; }
+.distribution-row:focus-visible { outline: 3px solid #006d5b; outline-offset: 2px; }
+.distribution-name { font-size: .8rem; overflow-wrap: anywhere; }
+.distribution-track { height: 20px; background: #eef3ef; border-radius: 3px; overflow: hidden; }
+.distribution-track > span { display: block; height: 100%; border-radius: 3px; }
+.distribution-value { text-align: right; font-size: .9rem; }
+.distribution-tooltip { display: none; position: absolute; bottom: 100%; left: 0; max-width: 100%; background: #064d40; color: white; padding: .6rem .8rem; border-radius: 6px; font-size: .8rem; z-index: 3; pointer-events: none; }
+.distribution-row:hover .distribution-tooltip, .distribution-row:focus-visible .distribution-tooltip { display: block; }
+.distribution-empty { border: 1px dashed #c4d5ca; background: #f5f9f6; border-radius: 12px; padding: 2rem; text-align: center; color: #52665a; }
+.distribution-empty > i { display: block; font-size: 2rem; color: #006d5b; margin-bottom: .8rem; }
+.distribution-empty p { font-size: .85rem; margin-top: .7rem; }
+@media(max-width: 420px) { .distribution-row { grid-template-columns: minmax(100px, 1fr) minmax(45px, .65fr) 2rem; gap: .35rem; } }
