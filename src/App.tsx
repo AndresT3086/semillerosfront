@@ -1,15 +1,16 @@
 import { useEffect, useState } from 'react';
 import type { LoginResponse } from './types';
 import HomePage from './pages/HomePage';
+import AdminReportsPage from './pages/AdminReportsPage';
 import AdminDashboardPage from './pages/AdminDashboardPage';
 import { isAdminToken } from './auth/role';
 import LoginPage from './pages/LoginPage';
 import CoordinadorHomePage from './pages/CoordinadorHomePage';
 import CaracterizacionPage from './pages/CaracterizacionPage';
 
-type View = 'home' | 'login' | 'coordinador' | 'caracterizacion' | 'admin';
+type View = 'home' | 'login' | 'coordinador' | 'caracterizacion' | 'admin' | 'reportes';
 
-const ADMIN_PREVIEW = import.meta.env.DEV && new URLSearchParams(window.location.search).get('vista') === 'admin';
+const ADMIN_PREVIEW = import.meta.env.DEV && ['admin', 'reportes'].includes(new URLSearchParams(window.location.search).get('vista') ?? '');
 
 const AUTH_STORAGE_KEY = 'sigsi_auth';
 const SELECTED_SEMILLERO_KEY = 'sigsi_selected_semillero';
@@ -51,7 +52,7 @@ export default function App() {
   const [selectedSemilleroId, setSelectedSemilleroId] = useState<number | null>(() => readStoredSemilleroId());
   const [view, setView] = useState<View>(() => {
     const storedAuth = readStoredAuth();
-    if (ADMIN_PREVIEW) return 'admin';
+    if (ADMIN_PREVIEW) return new URLSearchParams(window.location.search).get('vista') === 'reportes' ? 'reportes' : 'admin';
     if (!storedAuth) return 'home';
     if (isAdminToken(storedAuth.token)) return 'admin';
     return readStoredSemilleroId() != null ? 'caracterizacion' : 'coordinador';
@@ -110,8 +111,15 @@ export default function App() {
     };
   }, [auth]);
 
+  if (view === 'reportes' && (ADMIN_PREVIEW || (auth && isAdminToken(auth.token)))) {
+    return <AdminReportsPage preview={ADMIN_PREVIEW} onBack={() => setView('admin')} onLogout={() => {
+      window.history.replaceState(null, '', window.location.pathname);
+      handleLogout();
+    }} />;
+  }
+
   if (view === 'admin' && (ADMIN_PREVIEW || (auth && isAdminToken(auth.token)))) {
-    return <AdminDashboardPage correo={auth?.correo} preview={ADMIN_PREVIEW} onLogout={() => {
+    return <AdminDashboardPage onReports={() => setView('reportes')} correo={auth?.correo} preview={ADMIN_PREVIEW} onLogout={() => {
       if (ADMIN_PREVIEW) {
         window.history.replaceState(null, '', window.location.pathname);
         setView('home');
