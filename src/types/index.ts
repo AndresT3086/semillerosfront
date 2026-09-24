@@ -110,7 +110,7 @@ export interface LoginResponse {
   token: string;
   tipo: string;
   correo: string;
-  idCoordinador: number;
+  idUsuario: number;
 }
 
 // ── Semillero del Coordinador ─────────────────────────────────────────────────

@@ -22,7 +22,7 @@ vi.mock('./pages/HomePage', () => ({ default: () => <h1>Portal</h1> }));
 vi.mock('./pages/CaracterizacionPage', () => ({ default: () => <h1>Caracterización</h1> }));
 vi.mock('./pages/LoginPage', () => ({
   default: ({ onLoginSuccess }: { onLoginSuccess: (response: LoginResponse) => void }) =>
-    <button onClick={() => onLoginSuccess({ token: token('ADMIN'), tipo: 'Bearer', correo: 'yiyi.lopez@udea.edu.co', idCoordinador: 6 })}>Ingresar</button>,
+    <button onClick={() => onLoginSuccess({ token: token('ADMIN'), tipo: 'Bearer', correo: 'yiyi.lopez@udea.edu.co', idUsuario: 6 })}>Ingresar</button>,
 }));
 
 function token(rol: string) {
@@ -30,7 +30,7 @@ function token(rol: string) {
 }
 
 function iniciarSesion(rol: string) {
-  sessionStorage.setItem('sigsi_auth', JSON.stringify({ token: token(rol), tipo: 'Bearer', correo: 'u@udea.edu.co', idCoordinador: 1 }));
+  sessionStorage.setItem('sigsi_auth', JSON.stringify({ token: token(rol), tipo: 'Bearer', correo: 'u@udea.edu.co', idUsuario: 1 }));
   sessionStorage.setItem('sigsi_last_activity', Date.now().toString());
 }
 
