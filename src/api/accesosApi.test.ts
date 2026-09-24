@@ -41,7 +41,7 @@ describe('accesosApi', () => {
     vi.stubGlobal('fetch', fetchMock);
     expect(await contarSolicitudesPendientes('tok')).toBe(2);
     await getSolicitudesAcceso('tok');
-    await aprobarSolicitud(5, 'tok');
+    expect(await aprobarSolicitud(5, 'tok')).toEqual({ mensaje: 'hecho', correoEnviado: true });
     await rechazarSolicitud(5, 'No coordina', true, 'tok');
     await invitarCoordinador({ nombres: 'Ana', apellidos: 'Zapata', correo: 'ana@udea.edu.co' }, 'tok');
     const rutas = fetchMock.mock.calls.map(c => { const u = new URL(c[0]); return u.pathname + u.search; });
@@ -51,6 +51,13 @@ describe('accesosApi', () => {
     ]);
     expect(fetchMock.mock.calls.every(c => c[1].headers.Authorization === 'Bearer tok')).toBe(true);
     expect(JSON.parse(fetchMock.mock.calls[3][1].body)).toEqual({ motivo: 'No coordina', bloquear: true });
+  });
+
+  it('informa cuando la cuenta quedó registrada pero el correo no salió', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(respuesta(true, { mensaje: 'sin correo', datos: { correoEnviado: false } })));
+    expect(await invitarCoordinador({ nombres: 'Ana', apellidos: 'Zapata', correo: 'ana@udea.edu.co' }, 'tok'))
+      .toEqual({ mensaje: 'sin correo', correoEnviado: false });
+    expect(await aprobarSolicitud(5, 'tok')).toEqual({ mensaje: 'sin correo', correoEnviado: false });
   });
 
   it('valida correo institucional y contraseña con las mismas reglas del backend', () => {

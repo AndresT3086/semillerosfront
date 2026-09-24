@@ -2,27 +2,33 @@ import { useState, type FormEvent } from 'react';
 import { DOMINIO_INSTITUCIONAL, esCorreoInstitucional, invitarCoordinador } from '../../api/accesosApi';
 
 const VACIO = { nombres: '', apellidos: '', correo: '' };
+const CLASE_MENSAJE = { ok: 'alert-success', aviso: 'alert-warning', error: 'alert-danger' } as const;
 
 // Invitación directa a un coordinador: solo correos institucionales. Si la persona ya fue
 // invitada y no ha activado su cuenta, se reenvía el enlace (el anterior deja de servir).
 export default function InvitarCoordinadorForm({ token }: { token: string }) {
   const [datos, setDatos] = useState(VACIO);
   const [enviando, setEnviando] = useState(false);
-  const [mensaje, setMensaje] = useState<{ ok: boolean; texto: string } | null>(null);
+  const [mensaje, setMensaje] = useState<{ tipo: 'ok' | 'aviso' | 'error'; texto: string } | null>(null);
   const correoValido = esCorreoInstitucional(datos.correo);
 
   async function enviar(event: FormEvent) {
     event.preventDefault();
-    if (!datos.nombres.trim() || !datos.apellidos.trim()) { setMensaje({ ok: false, texto: 'Ingrese nombres y apellidos.' }); return; }
-    if (!correoValido) { setMensaje({ ok: false, texto: `Solo se puede invitar a correos ${DOMINIO_INSTITUCIONAL}.` }); return; }
+    if (!datos.nombres.trim() || !datos.apellidos.trim()) { setMensaje({ tipo: 'error', texto: 'Ingrese nombres y apellidos.' }); return; }
+    if (!correoValido) { setMensaje({ tipo: 'error', texto: `Solo se puede invitar a correos ${DOMINIO_INSTITUCIONAL}.` }); return; }
     setEnviando(true);
     setMensaje(null);
     try {
-      const texto = await invitarCoordinador({ nombres: datos.nombres.trim(), apellidos: datos.apellidos.trim(), correo: datos.correo.trim().toLowerCase() }, token);
-      setMensaje({ ok: true, texto: `${texto} ${datos.correo.trim().toLowerCase()} tiene 24 horas para crear su contraseña.` });
-      setDatos(VACIO);
+      const correo = datos.correo.trim().toLowerCase();
+      const resultado = await invitarCoordinador({ nombres: datos.nombres.trim(), apellidos: datos.apellidos.trim(), correo }, token);
+      if (resultado.correoEnviado) {
+        setMensaje({ tipo: 'ok', texto: `${resultado.mensaje} ${correo} tiene 24 horas para crear su contraseña.` });
+        setDatos(VACIO);
+      } else {
+        setMensaje({ tipo: 'aviso', texto: resultado.mensaje });
+      }
     } catch (err) {
-      setMensaje({ ok: false, texto: err instanceof Error ? err.message : 'No se pudo enviar la invitación.' });
+      setMensaje({ tipo: 'error', texto: err instanceof Error ? err.message : 'No se pudo enviar la invitación.' });
     } finally {
       setEnviando(false);
     }
@@ -31,7 +37,7 @@ export default function InvitarCoordinadorForm({ token }: { token: string }) {
   return <section className="admin-card" aria-labelledby="invitar-coordinador">
     <div className="admin-section-heading"><h2 id="invitar-coordinador"><i className="bi bi-envelope-plus" aria-hidden="true" />Invitar coordinador</h2></div>
     <p className="small text-muted">La persona recibirá un enlace para crear su contraseña. Solo se admiten correos {DOMINIO_INSTITUCIONAL}.</p>
-    {mensaje && <div className={`alert ${mensaje.ok ? 'alert-success' : 'alert-danger'} py-2 small`} role={mensaje.ok ? 'status' : 'alert'}>{mensaje.texto}</div>}
+    {mensaje && <div className={`alert ${CLASE_MENSAJE[mensaje.tipo]} py-2 small`} role={mensaje.tipo === 'ok' ? 'status' : 'alert'}>{mensaje.texto}</div>}
     <form className="row g-2 align-items-end" onSubmit={enviar} noValidate>
       <div className="col-md-3"><label htmlFor="inv-nombres" className="form-label small">Nombres</label>
         <input id="inv-nombres" className="form-control" maxLength={100} value={datos.nombres} onChange={e => setDatos({ ...datos, nombres: e.target.value })} /></div>
