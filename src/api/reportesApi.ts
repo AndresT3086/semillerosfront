@@ -1,6 +1,7 @@
 import type { PageResponse } from '../types';
 import type { ReportFilters } from '../reports/filters';
 import { apiFetch, authHeaders, BASE_URL } from './semillerosApi';
+import type { ConteoAsistencia } from './asistenciaApi';
 
 // Alcance de los reportes según el rol (HU12). El backend valida el rol con el JWT.
 export type AlcanceReporte = 'ADMIN' | 'COORDINADOR' | 'PUBLICO';
@@ -44,6 +45,8 @@ export interface ReporteDashboard {
   porRol: ReporteConteo[];
   evolucion: ReporteEvolucion[];
   actividadesPorTipo: ReporteConteo[];
+  /** Asistencia agregada: suma de asistencias esperadas de todos los semilleros filtrados. */
+  asistencia: { sesiones: number; asistencia: ConteoAsistencia };
 }
 
 export interface ReporteRendimiento {
@@ -55,13 +58,16 @@ export interface ReporteRendimiento {
   campus?: string;
   participantes: number;
   actividadesRealizadas: number;
+  /** Actividades registradas con asistencia en el período. */
+  sesiones: number;
+  /** Presentes / (presentes + ausentes); ausente si no hay registros de asistencia. */
   porcentajeAsistencia?: number;
   estado: 'ACTIVO' | 'INACTIVO';
 }
 
 export interface ReporteOpcion { id: number; nombre: string }
 
-export type OrdenRendimiento = 'nombre' | 'unidad' | 'tipo' | 'campus' | 'participantes' | 'actividades' | 'estado';
+export type OrdenRendimiento = 'nombre' | 'unidad' | 'tipo' | 'campus' | 'participantes' | 'actividades' | 'sesiones' | 'asistencia' | 'estado';
 export interface OrdenTabla { orden: OrdenRendimiento; direccion: 'asc' | 'desc' }
 export type FormatoExportacion = 'xlsx' | 'pdf' | 'csv';
 

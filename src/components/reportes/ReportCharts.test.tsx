@@ -5,6 +5,7 @@ import TopFacultades from './TopFacultades';
 import EvolutionChart from './EvolutionChart';
 import ActivitiesByType from './ActivitiesByType';
 import RendimientoTable from './RendimientoTable';
+import AttendanceSummary from './AttendanceSummary';
 import type { ReporteKpis, ReporteRendimiento } from '../../api/reportesApi';
 
 const kpis: ReporteKpis = {
@@ -79,8 +80,8 @@ describe('ActivitiesByType (HU8)', () => {
 
 describe('RendimientoTable (HU9)', () => {
   const filas: ReporteRendimiento[] = [
-    { id: 1, nombre: 'Semillero IA', codigo: 'SEM-1', unidadAcademica: 'Facultad de Ingeniería', tipoUnidad: 'FACULTAD', campus: 'Medellín', participantes: 12, actividadesRealizadas: 4, estado: 'ACTIVO' },
-    { id: 2, nombre: 'Lenguas', codigo: 'SEM-2', unidadAcademica: 'Escuela de Idiomas', tipoUnidad: 'ESCUELA', participantes: 3, actividadesRealizadas: 0, porcentajeAsistencia: 87.5, estado: 'INACTIVO' },
+    { id: 1, nombre: 'Semillero IA', codigo: 'SEM-1', unidadAcademica: 'Facultad de Ingeniería', tipoUnidad: 'FACULTAD', campus: 'Medellín', participantes: 12, actividadesRealizadas: 4, sesiones: 9, estado: 'ACTIVO' },
+    { id: 2, nombre: 'Lenguas', codigo: 'SEM-2', unidadAcademica: 'Escuela de Idiomas', tipoUnidad: 'ESCUELA', participantes: 3, actividadesRealizadas: 0, sesiones: 2, porcentajeAsistencia: 87.5, estado: 'INACTIVO' },
   ];
   const page = { contenido: filas, paginaActual: 0, tamano: 10, totalElementos: 12, totalPaginas: 2, esPrimeraPagina: true, esUltimaPagina: false };
 
@@ -94,6 +95,8 @@ describe('RendimientoTable (HU9)', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Semillero' }));
     expect(onOrden).toHaveBeenCalledWith({ orden: 'nombre', direccion: 'asc' });
     fireEvent.click(screen.getByRole('button', { name: 'Siguiente' }));
+    fireEvent.click(screen.getByRole('button', { name: '% Asistencia' }));
+    expect(onOrden).toHaveBeenCalledWith({ orden: 'asistencia', direccion: 'asc' });
     expect(onPagina).toHaveBeenCalledWith(1);
   });
 
@@ -102,11 +105,26 @@ describe('RendimientoTable (HU9)', () => {
     render(<RendimientoTable page={page} orden={{ orden: 'nombre', direccion: 'asc' }} onOrden={() => {}} onPagina={() => {}} onAbrir={onAbrir} />);
     expect(screen.getByText('Activo')).toHaveClass('is-active');
     expect(screen.getByText('Inactivo')).toHaveClass('is-inactive');
-    expect(screen.getByText('No disponible')).toBeInTheDocument();
+    expect(screen.getByText('Sin registros')).toBeInTheDocument();
+    expect(screen.getByText('9')).toBeInTheDocument();
     expect(screen.getByRole('progressbar', { name: 'Asistencia de Lenguas' })).toHaveAttribute('aria-valuenow', '87.5');
     fireEvent.click(screen.getByRole('row', { name: 'Ver detalle de Semillero IA' }));
     expect(onAbrir).toHaveBeenCalledWith(1);
     fireEvent.keyDown(screen.getByRole('row', { name: 'Ver detalle de Lenguas' }), { key: 'Enter' });
     expect(onAbrir).toHaveBeenCalledWith(2);
+  });
+});
+
+describe('AttendanceSummary (HU9)', () => {
+  it('muestra la asistencia ponderada y sus totales', () => {
+    render(<AttendanceSummary datos={{ sesiones: 6, asistencia: { presentes: 45, ausentes: 5, excusados: 2, porcentaje: 90 } }} />);
+    expect(screen.getByText('90,0 %')).toBeInTheDocument();
+    expect(screen.getByText('Asistencias esperadas').nextSibling).toHaveTextContent('50');
+    expect(screen.getByText('Ausencias excusadas').nextSibling).toHaveTextContent('2');
+  });
+
+  it('informa cuando no hay actividades registradas', () => {
+    render(<AttendanceSummary datos={{ sesiones: 0, asistencia: { presentes: 0, ausentes: 0, excusados: 0 } }} />);
+    expect(screen.getByRole('status')).toHaveTextContent('No hay actividades con asistencia registrada');
   });
 });

@@ -15,6 +15,7 @@ import MemberComposition from '../components/reportes/MemberComposition';
 import TopFacultades from '../components/reportes/TopFacultades';
 import EvolutionChart from '../components/reportes/EvolutionChart';
 import ActivitiesByType from '../components/reportes/ActivitiesByType';
+import AttendanceSummary from '../components/reportes/AttendanceSummary';
 import RendimientoTable from '../components/reportes/RendimientoTable';
 import { NOMBRE_TIPO } from '../components/reportes/formato';
 import DetailsModal from '../components/DetailsModal';
@@ -230,6 +231,7 @@ export default function ReportsPage({ alcance, token, correo, backLabel = '← V
           <div className="col-lg-7"><EvolutionChart puntos={dashboard.evolucion} /></div>
         </div>
         <ActivitiesByType rows={dashboard.actividadesPorTipo} />
+        <AttendanceSummary datos={dashboard.asistencia} />
       </>}
 
       {conDetalle && <section className="admin-card report-table-card" aria-labelledby="report-detail"><div className="admin-section-heading"><h2 id="report-detail"><i className="bi bi-table" aria-hidden="true" />Rendimiento por semillero</h2><span className="admin-badge">Activos e inactivos</span></div>
@@ -237,7 +239,7 @@ export default function ReportsPage({ alcance, token, correo, backLabel = '← V
           : !tabla ? <p role="status">Cargando tabla…</p>
             : !tabla.contenido.length ? <p>No se encontraron semilleros para los filtros aplicados.</p>
               : <RendimientoTable page={tabla} orden={orden} onOrden={next => { setOrden(next); setPagina(0); }} onPagina={setPagina} onAbrir={setDetalleId} />}
-        <p className="text-muted small mt-3 mb-0">El porcentaje de asistencia estará disponible cuando el sistema registre la asistencia de los integrantes.</p>
+        <p className="text-muted small mt-3 mb-0">Actividades y asistencia registradas por los coordinadores en el período. % asistencia = presentes / (presentes + ausentes); las ausencias excusadas se descuentan.</p>
       </section>}
     </main>
     <div className="no-print"><Footer /></div>

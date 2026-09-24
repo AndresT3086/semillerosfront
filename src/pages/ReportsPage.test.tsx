@@ -20,9 +20,10 @@ const dashboard: ReporteDashboard = {
   porRol: [{ id: 'TUTOR', nombre: 'Tutor', cantidad: 1 }],
   evolucion: [{ anio: 2025, semillerosActivos: 5, nuevos: 5, proyectado: false }, { anio: 2026, semillerosActivos: 7, nuevos: 2, proyectado: false }],
   actividadesPorTipo: [{ id: '1', nombre: 'Talleres', cantidad: 2 }],
+  asistencia: { sesiones: 6, asistencia: { presentes: 45, ausentes: 5, excusados: 2, porcentaje: 90 } },
 };
 const tabla = {
-  contenido: [{ id: 4, nombre: 'Robótica', codigo: 'SEM-4', unidadAcademica: 'Facultad de Ingeniería', tipoUnidad: 'FACULTAD' as const, participantes: 6, actividadesRealizadas: 2, estado: 'ACTIVO' as const }],
+  contenido: [{ id: 4, nombre: 'Robótica', codigo: 'SEM-4', unidadAcademica: 'Facultad de Ingeniería', tipoUnidad: 'FACULTAD' as const, participantes: 6, actividadesRealizadas: 2, sesiones: 4, porcentajeAsistencia: 87.5, estado: 'ACTIVO' as const }],
   paginaActual: 0, tamano: 10, totalElementos: 1, totalPaginas: 1, esPrimeraPagina: true, esUltimaPagina: true,
 };
 
@@ -51,6 +52,8 @@ describe('ReportsPage - administrador', () => {
     expect(await screen.findByRole('rowheader', { name: /Robótica/ })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Top 5 Facultades con más Semilleros' })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Evolución Semilleros' })).toBeInTheDocument();
+    expect(screen.getByRole('progressbar', { name: 'Asistencia a actividades' })).toHaveAttribute('aria-valuenow', '90');
+    expect(screen.getByRole('progressbar', { name: 'Asistencia de Robótica' })).toHaveAttribute('aria-valuenow', '87.5');
     expect(screen.getByText(/Filtros aplicados: 2025-1 · Facultad/)).toBeInTheDocument();
   });
 

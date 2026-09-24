@@ -7,8 +7,8 @@ const COLUMNAS: { clave: OrdenRendimiento | null; titulo: string }[] = [
   { clave: 'unidad', titulo: 'Unidad Académica' },
   { clave: 'tipo', titulo: 'Tipo' },
   { clave: 'participantes', titulo: 'Participantes' },
-  { clave: 'actividades', titulo: 'Actividades' },
-  { clave: null, titulo: '% Asistencia' },
+  { clave: 'sesiones', titulo: 'Actividades' },
+  { clave: 'asistencia', titulo: '% Asistencia' },
   { clave: 'estado', titulo: 'Estado' },
 ];
 
@@ -41,9 +41,9 @@ export default function RendimientoTable({ page, orden, onOrden, onPagina, onAbr
         <td>{fila.unidadAcademica ?? '—'}</td>
         <td>{NOMBRE_TIPO[fila.tipoUnidad]}</td>
         <td>{numero(fila.participantes)}</td>
-        <td>{numero(fila.actividadesRealizadas)}</td>
+        <td>{numero(fila.sesiones)}</td>
         <td>{fila.porcentajeAsistencia === undefined
-          ? <span className="text-muted" title="El sistema aún no registra asistencia">No disponible</span>
+          ? <span className="text-muted" title="No hay actividades con asistencia registrada en el período">Sin registros</span>
           : <div className="report-attendance"><div className="composition-progress" role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={fila.porcentajeAsistencia} aria-label={`Asistencia de ${fila.nombre}`}><span style={{ width: `${fila.porcentajeAsistencia}%`, backgroundColor: '#006d5b' }} /></div><small>{porcentaje(fila.porcentajeAsistencia)}</small></div>}</td>
         <td><span className={`report-state ${fila.estado === 'ACTIVO' ? 'is-active' : 'is-inactive'}`}>{fila.estado === 'ACTIVO' ? 'Activo' : 'Inactivo'}</span></td>
       </tr>)}</tbody>
