@@ -13,21 +13,18 @@ describe('reportesApi', () => {
     expect(params.toString()).toBe('periodo=2025-1&idUnidad=3&pagina=2');
   });
 
-  it('consulta el tablero según el alcance del rol y con el token', async () => {
+  it('consulta el tablero según el alcance del rol y siempre con el token', async () => {
     const fetchMock = vi.fn().mockResolvedValue(response({ kpis: {} }));
     vi.stubGlobal('fetch', fetchMock);
     await getDashboard('ADMIN', { ...EMPTY_FILTERS, tipoUnidad: 'FACULTAD' }, 'tok');
-    await getDashboard('COORDINADOR', EMPTY_FILTERS, 'tok');
-    await getDashboard('PUBLICO', { ...EMPTY_FILTERS, idSemillero: '4', idCampus: '2' });
-    const [admin, coordinador, publico] = fetchMock.mock.calls.map(call => new URL(call[0]));
+    await getDashboard('COORDINADOR', { ...EMPTY_FILTERS, idSemillero: '4' }, 'tok2');
+    const [admin, coordinador] = fetchMock.mock.calls.map(call => new URL(call[0]));
     expect(admin.pathname).toBe('/api/v1/admin/reportes/dashboard');
     expect(admin.searchParams.get('tipoUnidad')).toBe('FACULTAD');
     expect(fetchMock.mock.calls[0][1].headers).toEqual({ Authorization: 'Bearer tok' });
     expect(coordinador.pathname).toBe('/api/v1/coordinador/reportes/dashboard');
-    expect(publico.pathname).toBe('/api/v1/reportes/publico/dashboard');
-    expect(publico.searchParams.has('idSemillero')).toBe(false);
-    expect(publico.searchParams.get('idCampus')).toBe('2');
-    expect(fetchMock.mock.calls[2][1].headers).toBeUndefined();
+    expect(coordinador.searchParams.get('idSemillero')).toBe('4');
+    expect(fetchMock.mock.calls[1][1].headers).toEqual({ Authorization: 'Bearer tok2' });
   });
 
   it('pide la tabla paginada y ordenada, y la lista de semilleros sin el seleccionado', async () => {

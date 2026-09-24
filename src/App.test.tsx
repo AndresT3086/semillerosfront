@@ -18,9 +18,7 @@ vi.mock('./pages/AsistenciaPage', () => ({
   default: ({ idSemillero, nombreSemillero, onBack }: { idSemillero: number; nombreSemillero: string; onBack: () => void }) =>
     <div><h1>Asistencia {idSemillero} {nombreSemillero}</h1><button onClick={onBack}>Volver</button></div>,
 }));
-vi.mock('./pages/HomePage', () => ({
-  default: ({ onEstadisticas }: { onEstadisticas: () => void }) => <div><h1>Portal</h1><button onClick={onEstadisticas}>Estadísticas</button></div>,
-}));
+vi.mock('./pages/HomePage', () => ({ default: () => <h1>Portal</h1> }));
 vi.mock('./pages/CaracterizacionPage', () => ({ default: () => <h1>Caracterización</h1> }));
 vi.mock('./pages/LoginPage', () => ({
   default: ({ onLoginSuccess }: { onLoginSuccess: (response: LoginResponse) => void }) =>
@@ -83,12 +81,14 @@ describe('Navegación de reportes por rol (HU12, HU15)', () => {
     expect(screen.getByRole('heading', { name: 'Panel coordinador' })).toBeInTheDocument();
   });
 
-  it('el portal público muestra estadísticas agregadas sin iniciar sesión', () => {
-    render(<App />);
-    fireEvent.click(screen.getByRole('button', { name: 'Estadísticas' }));
-    expect(screen.getByRole('heading', { name: 'Reportes PUBLICO' })).toBeInTheDocument();
-    expect(window.location.search).toBe('?vista=estadisticas');
-    fireEvent.click(screen.getByRole('button', { name: 'Volver' }));
+  it('los reportes no son públicos: sin sesión la URL de reportes pide iniciar sesión', () => {
+    window.history.replaceState(null, '', '/?vista=estadisticas');
+    const view = render(<App />);
     expect(screen.getByRole('heading', { name: 'Portal' })).toBeInTheDocument();
+    view.unmount();
+    window.history.replaceState(null, '', '/?vista=reportes');
+    render(<App />);
+    expect(screen.queryByRole('heading', { name: /Reportes/ })).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Ingresar' })).toBeInTheDocument();
   });
 });

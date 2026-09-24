@@ -12,10 +12,9 @@ const EMPTY_FILTERS: FilterValues = { idUnidad: '', idArea: '', idCampus: '', q:
 
 interface HomePageProps {
   onAccesoSigsi: () => void;
-  onEstadisticas?: () => void;
 }
 
-export default function HomePage({ onAccesoSigsi, onEstadisticas }: HomePageProps) {
+export default function HomePage({ onAccesoSigsi }: HomePageProps) {
   const [semilleros, setSemilleros] = useState<SemilleroResumen[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -82,7 +81,7 @@ export default function HomePage({ onAccesoSigsi, onEstadisticas }: HomePageProp
 
   return (
     <>
-      <Header onScrollToFilters={scrollToFilters} onAccesoSigsi={onAccesoSigsi} onEstadisticas={onEstadisticas} />
+      <Header onScrollToFilters={scrollToFilters} onAccesoSigsi={onAccesoSigsi} />
 
       <main className="container py-4">
         {/* Intro + stats */}
