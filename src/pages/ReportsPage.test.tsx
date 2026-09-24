@@ -1,12 +1,12 @@
-import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { getCampus, getUnidades } from '../api/semillerosApi';
-import { descargarArchivo, exportarReporte, getDashboard, getRendimiento, getSemillerosReporte, type ReporteDashboard } from '../api/reportesApi';
+import { descargarArchivo, escucharEventosReportes, exportarReporte, getDashboard, getRendimiento, getSemillerosReporte, type ReporteDashboard } from '../api/reportesApi';
 import { EMPTY_FILTERS } from '../reports/filters';
 import ReportsPage from './ReportsPage';
 
 vi.mock('../api/semillerosApi', () => ({ getUnidades: vi.fn(), getCampus: vi.fn() }));
-vi.mock('../api/reportesApi', () => ({ getDashboard: vi.fn(), getRendimiento: vi.fn(), getSemillerosReporte: vi.fn(), exportarReporte: vi.fn(), descargarArchivo: vi.fn() }));
+vi.mock('../api/reportesApi', () => ({ getDashboard: vi.fn(), getRendimiento: vi.fn(), getSemillerosReporte: vi.fn(), exportarReporte: vi.fn(), descargarArchivo: vi.fn(), escucharEventosReportes: vi.fn() }));
 vi.mock('../components/DetailsModal', () => ({
   default: ({ semilleroId, isOpen }: { semilleroId: number | null; isOpen: boolean }) => isOpen ? <div role="dialog">Detalle {semilleroId}</div> : null,
 }));
@@ -35,6 +35,7 @@ beforeEach(() => {
   vi.mocked(getDashboard).mockResolvedValue(dashboard);
   vi.mocked(getRendimiento).mockResolvedValue(tabla);
   vi.mocked(getSemillerosReporte).mockResolvedValue([{ id: 4, nombre: 'Robótica' }]);
+  vi.mocked(escucharEventosReportes).mockReturnValue(new Promise(() => {}));
 });
 
 const renderAdmin = () => render(<ReportsPage alcance="ADMIN" token="tok" onBack={() => {}} onLogout={() => {}} />);
@@ -146,6 +147,38 @@ describe('ReportsPage - exportación e impresión', () => {
     expect(screen.queryByRole('button', { name: 'Exportar Excel' })).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Imprimir' })).toBeInTheDocument();
     expect(getRendimiento).toHaveBeenCalledWith('COORDINADOR', EMPTY_FILTERS, 0, expect.anything(), 'tok', expect.any(AbortSignal));
+  });
+});
+
+describe('ReportsPage - actualización en tiempo real (HU13)', () => {
+  it('recarga el tablero y muestra un aviso cuando el servidor informa cambios', async () => {
+    let emitir: (evento: { evento: string; datos: string }) => void = () => {};
+    vi.mocked(escucharEventosReportes).mockImplementation((_token, onEvento) => { emitir = onEvento; return new Promise(() => {}); });
+    renderAdmin();
+    await screen.findByRole('rowheader', { name: /Robótica/ });
+    expect(escucharEventosReportes).toHaveBeenCalledWith('tok', expect.any(Function), expect.any(AbortSignal));
+    act(() => emitir({ evento: 'conectado', datos: '{}' }));
+    expect(screen.getByText('Actualización automática activa')).toBeInTheDocument();
+    vi.mocked(getDashboard).mockResolvedValue({ ...dashboard, kpis: { ...dashboard.kpis, semillerosActivos: 8 } });
+    act(() => emitir({ evento: 'datos-actualizados', datos: '{}' }));
+    expect(await within(screen.getByRole('region', { name: 'Indicadores clave' })).findByText('8')).toBeInTheDocument();
+    expect(screen.getByText('Los datos han sido actualizados')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Cerrar aviso' }));
+    expect(screen.queryByText('Los datos han sido actualizados')).not.toBeInTheDocument();
+  });
+
+  it('informa si no puede conectarse sin perder los datos mostrados (RN48)', async () => {
+    vi.mocked(escucharEventosReportes).mockRejectedValue(new Error('Error 503'));
+    renderAdmin();
+    expect(await screen.findByText(/No se pudo verificar si hay datos nuevos/)).toBeInTheDocument();
+    expect(await within(screen.getByRole('region', { name: 'Indicadores clave' })).findByText('7')).toBeInTheDocument();
+  });
+
+  it('no abre la conexión para coordinadores ni para el público', async () => {
+    render(<ReportsPage alcance="COORDINADOR" token="tok" onBack={() => {}} />);
+    await screen.findByRole('rowheader', { name: /Robótica/ });
+    expect(escucharEventosReportes).not.toHaveBeenCalled();
+    expect(screen.queryByText(/Actualización automática/)).not.toBeInTheDocument();
   });
 });
 

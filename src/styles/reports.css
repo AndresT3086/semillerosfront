@@ -105,3 +105,12 @@
   .report-print-heading { justify-content: space-between; gap: 1rem; font-size: .85rem; color: #254b3d; border-bottom: 2px solid #006d5b; padding-bottom: .5rem; margin-bottom: .75rem; }
   .report-table-card .table-responsive { overflow: visible; }
 }
+
+/* ── Actualización en tiempo real (HU13) ─────────────────────────────────────── */
+.report-live { display: inline-flex; align-items: center; gap: .45rem; font-size: .8rem; color: #52665a; margin: 0 0 .5rem; }
+.report-live-dot { width: 9px; height: 9px; border-radius: 50%; background: #b8c4bd; }
+.report-live.is-conectado .report-live-dot { background: #287843; box-shadow: 0 0 0 4px #28784322; }
+.report-live.is-error .report-live-dot { background: #c28a00; }
+.report-live-toast { position: fixed; right: 1.5rem; bottom: 1.5rem; z-index: 1080; display: flex; align-items: center; background: #064d40; color: white; border-radius: 10px; padding: .8rem 1rem; box-shadow: 0 8px 24px #0003; font-size: .9rem; animation: report-toast-in .25s ease-out; }
+@keyframes report-toast-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .report-live-toast { animation: none; } }

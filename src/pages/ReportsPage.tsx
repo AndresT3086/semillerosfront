@@ -7,6 +7,7 @@ import {
 } from '../api/reportesApi';
 import type { FiltroItem, PageResponse } from '../types';
 import { EMPTY_FILTERS, readReportFilters, writeReportFilters, type ReportFilters } from '../reports/filters';
+import { useEventosReportes } from '../reports/useEventosReportes';
 import KpiCards from '../components/reportes/KpiCards';
 import UnitDistribution from '../components/reportes/UnitDistribution';
 import CampusDistribution from '../components/reportes/CampusDistribution';
@@ -62,6 +63,11 @@ export default function ReportsPage({ alcance, token, correo, backLabel = '← V
   const [exportando, setExportando] = useState<FormatoExportacion | null>(null);
   const [exportResultado, setExportResultado] = useState<{ ok: boolean; texto: string } | null>(null);
   const [impresoEn, setImpresoEn] = useState<Date | null>(null);
+  const [avisoActualizado, setAvisoActualizado] = useState(false);
+  const enVivo = useEventosReportes(token, alcance === 'ADMIN', () => {
+    setRevision(value => value + 1);
+    setAvisoActualizado(true);
+  });
 
   const years = Array.from({ length: new Date().getFullYear() - 1999 }, (_, i) => new Date().getFullYear() - i);
   const dirty = JSON.stringify(filters) !== JSON.stringify(applied);
@@ -115,6 +121,12 @@ export default function ReportsPage({ alcance, token, correo, backLabel = '← V
   }, [alcance, conDetalle, token, periodo, tipoUnidad, idUnidad, idCampus, revision]);
 
   useEffect(() => { writeReportFilters(applied); }, [applied]);
+
+  useEffect(() => {
+    if (!avisoActualizado) return undefined;
+    const temporizador = window.setTimeout(() => setAvisoActualizado(false), 6_000);
+    return () => window.clearTimeout(temporizador);
+  }, [avisoActualizado, revision]);
 
   // HU11: la fecha de impresión se fija justo antes de abrir el diálogo (también con Ctrl+P).
   useEffect(() => {
@@ -200,6 +212,9 @@ export default function ReportsPage({ alcance, token, correo, backLabel = '← V
         {filterError && <p className="text-danger mt-3 mb-0" role="alert">No se cargaron todos los filtros. Pulsa «Actualizar datos» para reintentar.</p>}
       </section>
 
+      {enVivo !== 'inactivo' && <p className={`report-live no-print is-${enVivo}`}><span className="report-live-dot" aria-hidden="true" />{enVivo === 'conectado' ? 'Actualización automática activa' : enVivo === 'error' ? 'Sin conexión para actualizaciones automáticas' : 'Conectando actualizaciones automáticas…'}</p>}
+      {enVivo === 'error' && <div className="alert alert-warning no-print" role="alert">No se pudo verificar si hay datos nuevos. Los datos mostrados se conservan y se reintentará automáticamente.</div>}
+      {avisoActualizado && <div className="report-live-toast no-print" role="status"><i className="bi bi-arrow-repeat me-2" aria-hidden="true" />Los datos han sido actualizados<button type="button" className="btn-close btn-close-white ms-3" aria-label="Cerrar aviso" onClick={() => setAvisoActualizado(false)} /></div>}
       <div className="report-status" role="status">{loading ? 'Consultando la información más reciente…' : updatedAt ? `Última consulta: ${updatedAt.toLocaleString('es-CO')}` : 'Sin consulta disponible'}</div>
       <p className="small report-applied">Filtros aplicados: {resumenFiltros}</p>
       {error && <div className="alert alert-danger no-print" role="alert">No pudimos consultar los indicadores. Los datos mostrados pueden no estar actualizados.<button className="btn btn-link" onClick={() => setRevision(value => value + 1)}>Reintentar</button></div>}
