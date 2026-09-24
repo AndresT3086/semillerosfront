@@ -25,10 +25,10 @@ import type {
   SemilleroResumen,
 } from '../types';
 
-const BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8080';
+export const BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8080';
 
 // El backend envuelve todas las respuestas en ApiResponse<T> { exitoso, mensaje, datos, ... }
-async function apiFetch<T>(path: string, options?: RequestInit): Promise<T> {
+export async function apiFetch<T>(path: string, options?: RequestInit): Promise<T> {
   const res = await fetch(`${BASE_URL}${path}`, options);
   if (!res.ok) {
     const body = await res.json().catch(() => ({}));
@@ -104,7 +104,7 @@ export async function loginCoordinador(
 }
 
 // ── Coordinador: gestión de semilleros ────────────────────────────────────────
-function authHeaders(token: string) {
+export function authHeaders(token: string) {
   return { Authorization: `Bearer ${token}` };
 }
 
