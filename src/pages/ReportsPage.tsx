@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react';
+import { flushSync } from 'react-dom';
 import { getCampus, getUnidades } from '../api/semillerosApi';
 import {
-  getDashboard, getRendimiento, getSemillerosReporte,
-  type AlcanceReporte, type OrdenTabla, type ReporteDashboard, type ReporteOpcion, type ReporteRendimiento,
+  descargarArchivo, exportarReporte, getDashboard, getRendimiento, getSemillerosReporte,
+  type AlcanceReporte, type FormatoExportacion, type OrdenTabla, type ReporteDashboard, type ReporteOpcion, type ReporteRendimiento,
 } from '../api/reportesApi';
 import type { FiltroItem, PageResponse } from '../types';
 import { EMPTY_FILTERS, readReportFilters, writeReportFilters, type ReportFilters } from '../reports/filters';
@@ -19,6 +20,12 @@ import DetailsModal from '../components/DetailsModal';
 import Footer from '../components/Footer';
 import '../styles/admin.css';
 import '../styles/reports.css';
+
+const FORMATOS: { formato: FormatoExportacion; etiqueta: string; icono: string }[] = [
+  { formato: 'xlsx', etiqueta: 'Exportar Excel', icono: 'file-earmark-spreadsheet' },
+  { formato: 'pdf', etiqueta: 'Exportar PDF', icono: 'file-earmark-pdf' },
+  { formato: 'csv', etiqueta: 'Exportar CSV', icono: 'filetype-csv' },
+];
 
 const TITULOS: Record<AlcanceReporte, { badge: string; descripcion: string }> = {
   ADMIN: { badge: 'REPORTES Y ESTADÍSTICAS', descripcion: 'Indicadores globales del programa de semilleros de investigación.' },
@@ -52,6 +59,9 @@ export default function ReportsPage({ alcance, token, correo, backLabel = '← V
   const [orden, setOrden] = useState<OrdenTabla>({ orden: 'nombre', direccion: 'asc' });
   const [detalleId, setDetalleId] = useState<number | null>(null);
   const [updatedAt, setUpdatedAt] = useState<Date | null>(null);
+  const [exportando, setExportando] = useState<FormatoExportacion | null>(null);
+  const [exportResultado, setExportResultado] = useState<{ ok: boolean; texto: string } | null>(null);
+  const [impresoEn, setImpresoEn] = useState<Date | null>(null);
 
   const years = Array.from({ length: new Date().getFullYear() - 1999 }, (_, i) => new Date().getFullYear() - i);
   const dirty = JSON.stringify(filters) !== JSON.stringify(applied);
@@ -106,6 +116,34 @@ export default function ReportsPage({ alcance, token, correo, backLabel = '← V
 
   useEffect(() => { writeReportFilters(applied); }, [applied]);
 
+  // HU11: la fecha de impresión se fija justo antes de abrir el diálogo (también con Ctrl+P).
+  useEffect(() => {
+    const antesDeImprimir = () => {
+      const ahora = new Date();
+      flushSync(() => setImpresoEn(ahora));
+      document.documentElement.style.setProperty('--sigsi-print-footer',
+        `"SIGSI · Universidad de Antioquia · Impreso el ${ahora.toLocaleString('es-CO')}"`);
+    };
+    window.addEventListener('beforeprint', antesDeImprimir);
+    return () => {
+      window.removeEventListener('beforeprint', antesDeImprimir);
+      document.documentElement.style.removeProperty('--sigsi-print-footer');
+    };
+  }, []);
+
+  // HU10/RN38: la exportación corre en segundo plano; la página sigue disponible mientras se genera.
+  function exportar(formato: FormatoExportacion) {
+    setExportando(formato);
+    setExportResultado(null);
+    exportarReporte(formato, applied, orden, token!)
+      .then(({ nombre, archivo }) => {
+        descargarArchivo(nombre, archivo);
+        setExportResultado({ ok: true, texto: `Se descargó ${nombre}.` });
+      })
+      .catch((err: Error) => setExportResultado({ ok: false, texto: `No se pudo exportar el reporte: ${err.message}` }))
+      .finally(() => setExportando(null));
+  }
+
   function aplicar(next: ReportFilters) {
     setFilters(next);
     setApplied(next);
@@ -136,7 +174,17 @@ export default function ReportsPage({ alcance, token, correo, backLabel = '← V
       <div className="admin-page-heading"><div><p className="admin-eyebrow">INDICADORES DEL PROGRAMA</p><h1>Reportes y estadísticas</h1><p className="text-muted mb-0">{TITULOS[alcance].descripcion}</p></div>
         <div className="d-flex flex-wrap gap-2 no-print">
           <button className="btn admin-outline" disabled={loading} onClick={() => setRevision(value => value + 1)}><i className="bi bi-arrow-clockwise me-2" aria-hidden="true" />{loading ? 'Actualizando…' : 'Actualizar datos'}</button>
+          {alcance === 'ADMIN' && token && FORMATOS.map(({ formato, etiqueta, icono }) => <button key={formato} className="btn admin-outline" disabled={exportando !== null} onClick={() => exportar(formato)}>
+            {exportando === formato ? <span className="spinner-border spinner-border-sm me-2" aria-hidden="true" /> : <i className={`bi bi-${icono} me-2`} aria-hidden="true" />}{etiqueta}
+          </button>)}
+          <button className="btn btn-udea mt-0" onClick={() => window.print()}><i className="bi bi-printer me-2" aria-hidden="true" />Imprimir</button>
         </div>
+      </div>
+      {exportando && <p className="report-status no-print" role="status">Generando el archivo {exportando.toUpperCase()} con los filtros aplicados. Puedes seguir consultando el reporte.</p>}
+      {exportResultado && <div className={`alert ${exportResultado.ok ? 'alert-success' : 'alert-danger'} no-print`} role={exportResultado.ok ? 'status' : 'alert'}>{exportResultado.texto}</div>}
+      <div className="print-only report-print-heading">
+        <strong>Reporte de semilleros de investigación · Universidad de Antioquia</strong>
+        <span>Impreso el {(impresoEn ?? new Date()).toLocaleString('es-CO')}</span>
       </div>
 
       <section className="admin-card no-print" aria-labelledby="report-filters"><div className="admin-section-heading"><h2 id="report-filters"><i className="bi bi-funnel" aria-hidden="true" />Filtrar información</h2><span className="admin-badge">{applied.periodo || 'Estado actual'}</span></div>
@@ -177,7 +225,7 @@ export default function ReportsPage({ alcance, token, correo, backLabel = '← V
         <p className="text-muted small mt-3 mb-0">El porcentaje de asistencia estará disponible cuando el sistema registre la asistencia de los integrantes.</p>
       </section>}
     </main>
-    <Footer />
+    <div className="no-print"><Footer /></div>
     {conDetalle && <DetailsModal semilleroId={detalleId} isOpen={detalleId !== null} onClose={() => setDetalleId(null)} />}
   </div>;
 }

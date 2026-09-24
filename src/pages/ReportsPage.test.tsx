@@ -1,12 +1,12 @@
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { getCampus, getUnidades } from '../api/semillerosApi';
-import { getDashboard, getRendimiento, getSemillerosReporte, type ReporteDashboard } from '../api/reportesApi';
+import { descargarArchivo, exportarReporte, getDashboard, getRendimiento, getSemillerosReporte, type ReporteDashboard } from '../api/reportesApi';
 import { EMPTY_FILTERS } from '../reports/filters';
 import ReportsPage from './ReportsPage';
 
 vi.mock('../api/semillerosApi', () => ({ getUnidades: vi.fn(), getCampus: vi.fn() }));
-vi.mock('../api/reportesApi', () => ({ getDashboard: vi.fn(), getRendimiento: vi.fn(), getSemillerosReporte: vi.fn() }));
+vi.mock('../api/reportesApi', () => ({ getDashboard: vi.fn(), getRendimiento: vi.fn(), getSemillerosReporte: vi.fn(), exportarReporte: vi.fn(), descargarArchivo: vi.fn() }));
 vi.mock('../components/DetailsModal', () => ({
   default: ({ semilleroId, isOpen }: { semilleroId: number | null; isOpen: boolean }) => isOpen ? <div role="dialog">Detalle {semilleroId}</div> : null,
 }));
@@ -100,6 +100,52 @@ describe('ReportsPage - administrador', () => {
     vi.mocked(getDashboard).mockResolvedValue({ ...dashboard, kpis: { ...dashboard.kpis, semillerosActivos: 0 } });
     renderAdmin();
     expect(await screen.findByText(/No hay semilleros activos para los filtros seleccionados/)).toBeInTheDocument();
+  });
+});
+
+describe('ReportsPage - exportación e impresión', () => {
+  it('exporta en segundo plano con los filtros aplicados y descarga el archivo (HU10)', async () => {
+    let resolver: (value: { nombre: string; archivo: Blob }) => void = () => {};
+    vi.mocked(exportarReporte).mockReturnValue(new Promise(resolve => { resolver = resolve; }));
+    window.history.replaceState(null, '', '/?periodo=2026');
+    renderAdmin();
+    await screen.findByRole('rowheader', { name: /Robótica/ });
+    fireEvent.click(screen.getByRole('button', { name: 'Exportar Excel' }));
+    expect(exportarReporte).toHaveBeenCalledWith('xlsx', { ...EMPTY_FILTERS, periodo: '2026' }, { orden: 'nombre', direccion: 'asc' }, 'tok');
+    expect(screen.getByText(/Generando el archivo XLSX/)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Exportar PDF' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Actualizar datos' })).toBeEnabled();
+    const archivo = new Blob(['x']);
+    resolver({ nombre: 'reporte_sigsi_2026-09-24_1030.xlsx', archivo });
+    expect(await screen.findByText('Se descargó reporte_sigsi_2026-09-24_1030.xlsx.')).toBeInTheDocument();
+    expect(descargarArchivo).toHaveBeenCalledWith('reporte_sigsi_2026-09-24_1030.xlsx', archivo);
+  });
+
+  it('informa si la exportación falla', async () => {
+    vi.mocked(exportarReporte).mockRejectedValue(new Error('Error 500'));
+    renderAdmin();
+    await screen.findByRole('rowheader', { name: /Robótica/ });
+    fireEvent.click(screen.getByRole('button', { name: 'Exportar CSV' }));
+    expect(await screen.findByRole('alert')).toHaveTextContent('No se pudo exportar el reporte: Error 500');
+  });
+
+  it('abre el diálogo de impresión con la fecha de impresión (HU11)', async () => {
+    const print = vi.spyOn(window, 'print').mockImplementation(() => window.dispatchEvent(new Event('beforeprint')));
+    renderAdmin();
+    await screen.findByRole('rowheader', { name: /Robótica/ });
+    fireEvent.click(screen.getByRole('button', { name: 'Imprimir' }));
+    expect(print).toHaveBeenCalled();
+    expect(document.documentElement.style.getPropertyValue('--sigsi-print-footer')).toMatch(/^"SIGSI · Universidad de Antioquia · Impreso el /);
+    expect(screen.getByText(/^Impreso el /)).toBeInTheDocument();
+    print.mockRestore();
+  });
+
+  it('el coordinador puede imprimir pero no exportar', async () => {
+    render(<ReportsPage alcance="COORDINADOR" token="tok" onBack={() => {}} />);
+    await screen.findByRole('rowheader', { name: /Robótica/ });
+    expect(screen.queryByRole('button', { name: 'Exportar Excel' })).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Imprimir' })).toBeInTheDocument();
+    expect(getRendimiento).toHaveBeenCalledWith('COORDINADOR', EMPTY_FILTERS, 0, expect.anything(), 'tok', expect.any(AbortSignal));
   });
 });
 

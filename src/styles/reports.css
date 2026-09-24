@@ -80,3 +80,28 @@
 .activities-legend { list-style: none; padding: 0; margin: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: .5rem 1.25rem; }
 .activities-legend li { display: flex; align-items: center; gap: .5rem; font-size: .85rem; color: #254b3d; border-bottom: 1px solid #edf1ee; padding: .35rem 0; }
 .activities-legend strong { margin-left: auto; white-space: nowrap; }
+
+/* ── Impresión (HU11): vista optimizada del tablero ─────────────────────────── */
+.print-only { display: none; }
+@page {
+  size: A4 landscape;
+  margin: 12mm 10mm 16mm;
+  @bottom-left { content: var(--sigsi-print-footer, "SIGSI · Universidad de Antioquia"); font-size: 8pt; color: #52665a; }
+  @bottom-right { content: "Página " counter(page) " de " counter(pages); font-size: 8pt; color: #52665a; }
+}
+@media print {
+  /* RN39: sin navegación, filtros ni botones */
+  .no-print, .report-tooltip, .distribution-tooltip, .composition-tooltip, .modal, .modal-backdrop { display: none !important; }
+  .print-only { display: flex; }
+  /* RN40: gráficos nítidos (SVG/CSS) con los colores institucionales */
+  .report-page, .report-page * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  body { background: white; }
+  .report-page .admin-main { max-width: none; padding: 0; }
+  .report-page .udea-header { border-radius: 0; padding: 1rem 0; }
+  .report-page .admin-page-heading { margin: 1rem 0; }
+  .report-page .admin-card, .report-page .admin-stat { box-shadow: none; }
+  .report-avoid-break, .admin-card, .admin-stat { break-inside: avoid; }
+  .report-kpi:hover, .report-kpi:focus { transform: none; }
+  .report-print-heading { justify-content: space-between; gap: 1rem; font-size: .85rem; color: #254b3d; border-bottom: 2px solid #006d5b; padding-bottom: .5rem; margin-bottom: .75rem; }
+  .report-table-card .table-responsive { overflow: visible; }
+}
