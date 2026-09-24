@@ -185,16 +185,13 @@ describe('ReportsPage - actualización en tiempo real (HU13)', () => {
   });
 });
 
-describe('ReportsPage - público (HU12)', () => {
-  it('muestra estadísticas agregadas sin tabla ni selector de semillero', async () => {
-    window.history.replaceState(null, '', '/?idSemillero=4');
-    render(<ReportsPage alcance="PUBLICO" backLabel="← Volver al portal" onBack={() => {}} />);
-    expect(await within(screen.getByRole('region', { name: 'Indicadores clave' })).findByText('7')).toBeInTheDocument();
-    expect(getDashboard).toHaveBeenCalledWith('PUBLICO', EMPTY_FILTERS, undefined, expect.any(AbortSignal));
-    expect(screen.queryByLabelText('Semillero')).not.toBeInTheDocument();
-    expect(screen.queryByRole('heading', { name: 'Rendimiento por semillero' })).not.toBeInTheDocument();
-    expect(getRendimiento).not.toHaveBeenCalled();
-    expect(getSemillerosReporte).not.toHaveBeenCalled();
-    expect(screen.queryByRole('button', { name: 'Cerrar sesión' })).not.toBeInTheDocument();
+describe('ReportsPage - coordinador (HU12)', () => {
+  it('consulta solo el alcance del coordinador y no ofrece exportar', async () => {
+    render(<ReportsPage alcance="COORDINADOR" token="tok" onBack={() => {}} />);
+    await screen.findByRole('rowheader', { name: /Robótica/ });
+    expect(getDashboard).toHaveBeenCalledWith('COORDINADOR', EMPTY_FILTERS, 'tok', expect.any(AbortSignal));
+    expect(getSemillerosReporte).toHaveBeenCalledWith('COORDINADOR', EMPTY_FILTERS, 'tok', expect.any(AbortSignal));
+    expect(screen.getByRole('banner')).toHaveTextContent('REPORTES DE MIS SEMILLEROS');
+    expect(screen.queryByRole('button', { name: 'Exportar Excel' })).not.toBeInTheDocument();
   });
 });

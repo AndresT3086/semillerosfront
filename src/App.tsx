@@ -10,7 +10,7 @@ import CoordinadorHomePage from './pages/CoordinadorHomePage';
 import CaracterizacionPage from './pages/CaracterizacionPage';
 import AsistenciaPage from './pages/AsistenciaPage';
 
-type View = 'home' | 'login' | 'coordinador' | 'caracterizacion' | 'admin' | 'reportes' | 'estadisticas' | 'asistencia';
+type View = 'home' | 'login' | 'coordinador' | 'caracterizacion' | 'admin' | 'reportes' | 'asistencia';
 
 const AUTH_STORAGE_KEY = 'sigsi_auth';
 const SELECTED_SEMILLERO_KEY = 'sigsi_selected_semillero';
@@ -40,13 +40,13 @@ function readStoredAuth(): LoginResponse | null {
   }
 }
 
-// HU15: las vistas de reportes tienen URL propia (?vista=reportes o ?vista=estadisticas)
+// HU15: la vista de reportes tiene URL propia (?vista=reportes)
 // para poder recargarlas o compartirlas; las demás vistas no dejan rastro en la URL.
 function readVistaUrl() {
   return new URLSearchParams(window.location.search).get('vista');
 }
 
-function writeVistaUrl(vista: 'reportes' | 'estadisticas' | null) {
+function writeVistaUrl(vista: 'reportes' | null) {
   const params = new URLSearchParams(window.location.search);
   if (vista) params.set('vista', vista); else params.delete('vista');
   const query = params.toString();
@@ -66,7 +66,6 @@ export default function App() {
   const [view, setView] = useState<View>(() => {
     const storedAuth = readStoredAuth();
     const vista = readVistaUrl();
-    if (vista === 'estadisticas') return 'estadisticas';
     // RN54: sin sesión activa, la URL de reportes lleva al inicio de sesión
     if (!storedAuth) return vista === 'reportes' ? 'login' : 'home';
     if (vista === 'reportes') return 'reportes';
@@ -156,10 +155,6 @@ export default function App() {
       onBack={() => leaveReports(esAdmin ? 'admin' : 'coordinador')} onLogout={() => handleLogout()} />;
   }
 
-  if (view === 'estadisticas') {
-    return <ReportsPage alcance="PUBLICO" backLabel="← Volver al portal" onBack={() => leaveReports(auth ? (isAdminToken(auth.token) ? 'admin' : 'coordinador') : 'home')} />;
-  }
-
   if (view === 'admin' && auth && isAdminToken(auth.token)) {
     return <AdminDashboardPage onReports={openReports} correo={auth.correo} onLogout={() => handleLogout()} />;
   }
@@ -222,7 +217,7 @@ export default function App() {
           <i className="bi bi-clock-history me-2"></i>{sessionMessage}
         </div>
       )}
-      <HomePage onAccesoSigsi={() => setView('login')} onEstadisticas={() => { writeVistaUrl('estadisticas'); setView('estadisticas'); }} />
+      <HomePage onAccesoSigsi={() => setView('login')} />
     </>
   );
 }

@@ -32,21 +32,14 @@ const FORMATOS: { formato: FormatoExportacion; etiqueta: string; icono: string }
 const TITULOS: Record<AlcanceReporte, { badge: string; descripcion: string }> = {
   ADMIN: { badge: 'REPORTES Y ESTADÍSTICAS', descripcion: 'Indicadores globales del programa de semilleros de investigación.' },
   COORDINADOR: { badge: 'REPORTES DE MIS SEMILLEROS', descripcion: 'Indicadores calculados solo con los semilleros que coordinas.' },
-  PUBLICO: { badge: 'ESTADÍSTICAS GENERALES', descripcion: 'Cifras agregadas y anónimas del programa de semilleros.' },
 };
 
-function initialFilters(alcance: AlcanceReporte): ReportFilters {
-  const filters = readReportFilters();
-  return alcance === 'PUBLICO' ? { ...filters, idSemillero: '' } : filters;
-}
-
-// HU1-HU14: tablero de reportes. HU12: el contenido depende del alcance del rol.
-export default function ReportsPage({ alcance, token, correo, backLabel = '← Volver al panel', onBack, onLogout }: {
-  alcance: AlcanceReporte; token?: string; correo?: string; backLabel?: string; onBack: () => void; onLogout?: () => void;
+// HU1-HU14: tablero de reportes. HU12: el administrador ve todo y el coordinador solo sus semilleros.
+export default function ReportsPage({ alcance, token, correo, onBack, onLogout }: {
+  alcance: AlcanceReporte; token: string; correo?: string; onBack: () => void; onLogout?: () => void;
 }) {
-  const conDetalle = alcance !== 'PUBLICO' && Boolean(token);
-  const [filters, setFilters] = useState(() => initialFilters(alcance));
-  const [applied, setApplied] = useState(() => initialFilters(alcance));
+  const [filters, setFilters] = useState(readReportFilters);
+  const [applied, setApplied] = useState(readReportFilters);
   const [revision, setRevision] = useState(0);
   const [dashboard, setDashboard] = useState<ReporteDashboard | null>(null);
   // Cada respuesta guarda la clave de la consulta que la produjo: si no coincide con la actual, está cargando.
@@ -94,13 +87,12 @@ export default function ReportsPage({ alcance, token, correo, backLabel = '← V
   }, [alcance, applied, token, claveDashboard]);
 
   useEffect(() => {
-    if (!conDetalle) return undefined;
     const controller = new AbortController();
-    getRendimiento(alcance as Exclude<AlcanceReporte, 'PUBLICO'>, applied, pagina, orden, token!, controller.signal)
+    getRendimiento(alcance, applied, pagina, orden, token, controller.signal)
       .then(result => { if (!controller.signal.aborted) { setTabla(result); setTablaEstado({ clave: claveTabla, error: false }); } })
       .catch(() => { if (!controller.signal.aborted) setTablaEstado({ clave: claveTabla, error: true }); });
     return () => controller.abort();
-  }, [alcance, conDetalle, applied, pagina, orden, token, claveTabla]);
+  }, [alcance, applied, pagina, orden, token, claveTabla]);
 
   useEffect(() => {
     let active = true;
@@ -113,13 +105,12 @@ export default function ReportsPage({ alcance, token, correo, backLabel = '← V
   // RN49: la lista de semilleros depende de los demás filtros seleccionados.
   const { periodo, tipoUnidad, idUnidad, idCampus } = filters;
   useEffect(() => {
-    if (!conDetalle) return undefined;
     const controller = new AbortController();
-    getSemillerosReporte(alcance as Exclude<AlcanceReporte, 'PUBLICO'>, { ...EMPTY_FILTERS, periodo, tipoUnidad, idUnidad, idCampus }, token!, controller.signal)
+    getSemillerosReporte(alcance, { ...EMPTY_FILTERS, periodo, tipoUnidad, idUnidad, idCampus }, token, controller.signal)
       .then(result => { if (!controller.signal.aborted) setSemilleros(result); })
       .catch(() => { if (!controller.signal.aborted) setSemilleros([]); });
     return () => controller.abort();
-  }, [alcance, conDetalle, token, periodo, tipoUnidad, idUnidad, idCampus, revision]);
+  }, [alcance, token, periodo, tipoUnidad, idUnidad, idCampus, revision]);
 
   useEffect(() => { writeReportFilters(applied); }, [applied]);
 
@@ -148,7 +139,7 @@ export default function ReportsPage({ alcance, token, correo, backLabel = '← V
   function exportar(formato: FormatoExportacion) {
     setExportando(formato);
     setExportResultado(null);
-    exportarReporte(formato, applied, orden, token!)
+    exportarReporte(formato, applied, orden, token)
       .then(({ nombre, archivo }) => {
         descargarArchivo(nombre, archivo);
         setExportResultado({ ok: true, texto: `Se descargó ${nombre}.` });
@@ -171,7 +162,7 @@ export default function ReportsPage({ alcance, token, correo, backLabel = '← V
   const nombreUnidad = unidades.find(item => String(item.id) === applied.idUnidad)?.nombre ?? (applied.idUnidad ? `Unidad #${applied.idUnidad}` : 'Todas las unidades');
   const nombreCampus = campus.find(item => String(item.id) === applied.idCampus)?.nombre ?? (applied.idCampus ? `Campus #${applied.idCampus}` : 'Todos los campus');
   const nombreSemillero = semilleros.find(item => String(item.id) === applied.idSemillero)?.nombre ?? (applied.idSemillero ? `Semillero #${applied.idSemillero}` : 'Todos los semilleros');
-  const resumenFiltros = [applied.periodo || 'Estado actual', applied.tipoUnidad ? NOMBRE_TIPO[applied.tipoUnidad as keyof typeof NOMBRE_TIPO] : 'Todos los tipos', nombreUnidad, nombreCampus, ...(alcance === 'PUBLICO' ? [] : [nombreSemillero])].join(' · ');
+  const resumenFiltros = [applied.periodo || 'Estado actual', applied.tipoUnidad ? NOMBRE_TIPO[applied.tipoUnidad as keyof typeof NOMBRE_TIPO] : 'Todos los tipos', nombreUnidad, nombreCampus, nombreSemillero].join(' · ');
   const sinDatos = dashboard !== null && dashboard.kpis.semillerosActivos === 0;
 
   return <div className="admin-dashboard report-page">
@@ -179,7 +170,7 @@ export default function ReportsPage({ alcance, token, correo, backLabel = '← V
       <div><div className="udea-logo mb-1">UdeA <span>SEMILLEROS</span></div><div className="system-title">Sistema de Gestión de Semilleros · SIGSI</div><span className="sigsi-badge">{TITULOS[alcance].badge}</span></div>
       <div className="d-flex gap-2 flex-wrap align-items-center no-print">
         {correo && <span className="text-white small me-2">{correo}</span>}
-        <button className="btn btn-outline-light" onClick={onBack}>{backLabel}</button>
+        <button className="btn btn-outline-light" onClick={onBack}>← Volver al panel</button>
         {onLogout && <button className="btn btn-outline-light" onClick={onLogout}>Cerrar sesión</button>}
       </div>
     </div></header>
@@ -187,7 +178,7 @@ export default function ReportsPage({ alcance, token, correo, backLabel = '← V
       <div className="admin-page-heading"><div><p className="admin-eyebrow">INDICADORES DEL PROGRAMA</p><h1>Reportes y estadísticas</h1><p className="text-muted mb-0">{TITULOS[alcance].descripcion}</p></div>
         <div className="d-flex flex-wrap gap-2 no-print">
           <button className="btn admin-outline" disabled={loading} onClick={() => setRevision(value => value + 1)}><i className="bi bi-arrow-clockwise me-2" aria-hidden="true" />{loading ? 'Actualizando…' : 'Actualizar datos'}</button>
-          {alcance === 'ADMIN' && token && FORMATOS.map(({ formato, etiqueta, icono }) => <button key={formato} className="btn admin-outline" disabled={exportando !== null} onClick={() => exportar(formato)}>
+          {alcance === 'ADMIN' && FORMATOS.map(({ formato, etiqueta, icono }) => <button key={formato} className="btn admin-outline" disabled={exportando !== null} onClick={() => exportar(formato)}>
             {exportando === formato ? <span className="spinner-border spinner-border-sm me-2" aria-hidden="true" /> : <i className={`bi bi-${icono} me-2`} aria-hidden="true" />}{etiqueta}
           </button>)}
           <button className="btn btn-udea mt-0" onClick={() => window.print()}><i className="bi bi-printer me-2" aria-hidden="true" />Imprimir</button>
@@ -206,7 +197,7 @@ export default function ReportsPage({ alcance, token, correo, backLabel = '← V
           <div className="col-md-4"><label htmlFor="report-type" className="form-label">Tipo de unidad</label><select id="report-type" className="form-select" value={filters.tipoUnidad} onChange={event => setFilters(value => ({ ...value, tipoUnidad: event.target.value, idUnidad: '', idSemillero: '' }))}><option value="">Todas las unidades</option><option value="FACULTAD">Facultades</option><option value="ESCUELA">Escuelas</option><option value="INSTITUTO">Institutos</option><option value="CORPORACION">Corporaciones</option><option value="SECCIONAL">Seccionales</option></select></div>
           <div className="col-md-4"><label htmlFor="report-unit" className="form-label">Unidad académica</label><select id="report-unit" className="form-select" value={filters.idUnidad} onChange={event => setFilters(value => ({ ...value, idUnidad: event.target.value, idSemillero: '' }))} disabled={filterError}><option value="">Todas las unidades académicas</option>{unidades.map(item => <option key={item.id} value={item.id}>{item.nombre}</option>)}</select></div>
           <div className="col-md-4"><label htmlFor="report-campus" className="form-label">Campus o seccional</label><select id="report-campus" className="form-select" value={filters.idCampus} disabled={filterError} onChange={event => setFilters(value => ({ ...value, idCampus: event.target.value, idSemillero: '' }))}><option value="">Todos los campus</option>{campus.map(item => <option key={item.id} value={item.id}>{item.nombre}</option>)}</select></div>
-          {conDetalle && <div className="col-md-4"><label htmlFor="report-semillero" className="form-label">Semillero</label><select id="report-semillero" className="form-select" value={filters.idSemillero} onChange={event => setFilters(value => ({ ...value, idSemillero: event.target.value }))}><option value="">Todos los semilleros</option>{filters.idSemillero && !semilleros.some(item => String(item.id) === filters.idSemillero) && <option value={filters.idSemillero}>Semillero seleccionado #{filters.idSemillero}</option>}{semilleros.map(item => <option key={item.id} value={item.id}>{item.nombre}</option>)}</select><small className="text-muted">Semilleros activos que cumplen los demás filtros.</small></div>}
+          <div className="col-md-4"><label htmlFor="report-semillero" className="form-label">Semillero</label><select id="report-semillero" className="form-select" value={filters.idSemillero} onChange={event => setFilters(value => ({ ...value, idSemillero: event.target.value }))}><option value="">Todos los semilleros</option>{filters.idSemillero && !semilleros.some(item => String(item.id) === filters.idSemillero) && <option value={filters.idSemillero}>Semillero seleccionado #{filters.idSemillero}</option>}{semilleros.map(item => <option key={item.id} value={item.id}>{item.nombre}</option>)}</select><small className="text-muted">Semilleros activos que cumplen los demás filtros.</small></div>
           <div className="col-md-4 d-flex gap-2"><button className="btn btn-udea mt-0" disabled={loading}>Aplicar filtros</button><button type="button" className="btn admin-outline" onClick={() => aplicar({ ...EMPTY_FILTERS })}>Limpiar</button></div>
         </form>
         {dirty && <p role="status" className="mt-3 mb-0">Hay cambios sin aplicar. Los resultados conservan los filtros anteriores.</p>}
@@ -234,15 +225,15 @@ export default function ReportsPage({ alcance, token, correo, backLabel = '← V
         <AttendanceSummary datos={dashboard.asistencia} />
       </>}
 
-      {conDetalle && <section className="admin-card report-table-card" aria-labelledby="report-detail"><div className="admin-section-heading"><h2 id="report-detail"><i className="bi bi-table" aria-hidden="true" />Rendimiento por semillero</h2><span className="admin-badge">Activos e inactivos</span></div>
+      <section className="admin-card report-table-card" aria-labelledby="report-detail"><div className="admin-section-heading"><h2 id="report-detail"><i className="bi bi-table" aria-hidden="true" />Rendimiento por semillero</h2><span className="admin-badge">Activos e inactivos</span></div>
         {tablaError ? <div className="alert alert-warning" role="alert">No se pudo cargar la tabla de rendimiento.<button className="btn btn-link" onClick={() => setRevision(value => value + 1)}>Reintentar</button></div>
           : !tabla ? <p role="status">Cargando tabla…</p>
             : !tabla.contenido.length ? <p>No se encontraron semilleros para los filtros aplicados.</p>
               : <RendimientoTable page={tabla} orden={orden} onOrden={next => { setOrden(next); setPagina(0); }} onPagina={setPagina} onAbrir={setDetalleId} />}
         <p className="text-muted small mt-3 mb-0">Actividades y asistencia registradas por los coordinadores en el período. % asistencia = presentes / (presentes + ausentes); las ausencias excusadas se descuentan.</p>
-      </section>}
+      </section>
     </main>
     <div className="no-print"><Footer /></div>
-    {conDetalle && <DetailsModal semilleroId={detalleId} isOpen={detalleId !== null} onClose={() => setDetalleId(null)} />}
+    <DetailsModal semilleroId={detalleId} isOpen={detalleId !== null} onClose={() => setDetalleId(null)} />
   </div>;
 }

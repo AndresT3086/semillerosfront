@@ -3,14 +3,13 @@ import type { ReportFilters } from '../reports/filters';
 import { apiFetch, authHeaders, BASE_URL } from './semillerosApi';
 import type { ConteoAsistencia } from './asistenciaApi';
 
-// Alcance de los reportes según el rol (HU12). El backend valida el rol con el JWT.
-export type AlcanceReporte = 'ADMIN' | 'COORDINADOR' | 'PUBLICO';
+// Alcance de los reportes según el rol (HU12). Requieren sesión; el backend valida el rol con el JWT.
+export type AlcanceReporte = 'ADMIN' | 'COORDINADOR';
 export type TipoUnidad = 'FACULTAD' | 'ESCUELA' | 'INSTITUTO' | 'CORPORACION' | 'SECCIONAL' | 'OTRA';
 
 const RUTAS: Record<AlcanceReporte, string> = {
   ADMIN: '/api/v1/admin/reportes',
   COORDINADOR: '/api/v1/coordinador/reportes',
-  PUBLICO: '/api/v1/reportes/publico',
 };
 
 // El backend omite los campos null: una propiedad ausente significa «no disponible».
@@ -80,24 +79,22 @@ export function filtrosAQuery(filters: Partial<ReportFilters>, extra: Record<str
   return params;
 }
 
-function opciones(token: string | undefined, signal?: AbortSignal): RequestInit {
-  return { headers: token ? authHeaders(token) : undefined, cache: 'no-store', signal };
+function opciones(token: string, signal?: AbortSignal): RequestInit {
+  return { headers: authHeaders(token), cache: 'no-store', signal };
 }
 
-export function getDashboard(alcance: AlcanceReporte, filters: ReportFilters, token?: string, signal?: AbortSignal): Promise<ReporteDashboard> {
-  // El alcance público no admite un semillero específico (RN44)
-  const query = filtrosAQuery(alcance === 'PUBLICO' ? { ...filters, idSemillero: '' } : filters);
-  return apiFetch<ReporteDashboard>(`${RUTAS[alcance]}/dashboard?${query}`, opciones(token, signal));
+export function getDashboard(alcance: AlcanceReporte, filters: ReportFilters, token: string, signal?: AbortSignal): Promise<ReporteDashboard> {
+  return apiFetch<ReporteDashboard>(`${RUTAS[alcance]}/dashboard?${filtrosAQuery(filters)}`, opciones(token, signal));
 }
 
-export function getRendimiento(alcance: Exclude<AlcanceReporte, 'PUBLICO'>, filters: ReportFilters, pagina: number,
+export function getRendimiento(alcance: AlcanceReporte, filters: ReportFilters, pagina: number,
   orden: OrdenTabla, token: string, signal?: AbortSignal, tamano = 10): Promise<PageResponse<ReporteRendimiento>> {
   const query = filtrosAQuery(filters, { pagina, tamano, orden: orden.orden, direccion: orden.direccion });
   return apiFetch<PageResponse<ReporteRendimiento>>(`${RUTAS[alcance]}/rendimiento?${query}`, opciones(token, signal));
 }
 
 // RN49: solo semilleros activos que cumplen los demás filtros.
-export function getSemillerosReporte(alcance: Exclude<AlcanceReporte, 'PUBLICO'>, filters: ReportFilters, token: string,
+export function getSemillerosReporte(alcance: AlcanceReporte, filters: ReportFilters, token: string,
   signal?: AbortSignal): Promise<ReporteOpcion[]> {
   const query = filtrosAQuery({ ...filters, idSemillero: '' });
   return apiFetch<ReporteOpcion[]>(`${RUTAS[alcance]}/semilleros?${query}`, opciones(token, signal));
