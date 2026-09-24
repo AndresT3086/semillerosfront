@@ -2,6 +2,13 @@ import { useId } from 'react';
 import type { ReporteKpis } from '../../api/reportesApi';
 import { numero, porcentaje, variacion } from './formato';
 
+function icono(tendencia: string | null) {
+  if (tendencia === null) return 'info-circle';
+  if (tendencia.startsWith('+')) return 'arrow-up-right';
+  if (tendencia.startsWith('-')) return 'arrow-down-right';
+  return 'dash-lg';
+}
+
 function KpiCard({ label, icon, value, note, tendencia, comparado, loading }: {
   label: string; icon: string; value: string | null; note: string; tendencia: string | null; comparado?: string; loading: boolean;
 }) {
@@ -12,7 +19,7 @@ function KpiCard({ label, icon, value, note, tendencia, comparado, loading }: {
     <div className="admin-stat-value">{loading ? '…' : value ?? '—'}</div>
     <h2>{label}</h2><p>{note}</p>
     <div className={`report-trend${tendencia?.startsWith('-') ? ' is-down' : tendencia?.startsWith('+') ? ' is-up' : ''}`}>
-      <i className={`bi bi-${tendencia === null ? 'info-circle' : tendencia.startsWith('-') ? 'arrow-down-right' : 'arrow-up-right'} me-1`} aria-hidden="true" />{trendText}
+      <i className={`bi bi-${icono(tendencia)} me-1`} aria-hidden="true" />{trendText}
     </div>
     <span className="report-tooltip" role="tooltip" id={tooltipId}>
       {tendencia === null

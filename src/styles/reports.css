@@ -104,6 +104,15 @@
   .report-kpi:hover, .report-kpi:focus { transform: none; }
   .report-print-heading { justify-content: space-between; gap: 1rem; font-size: .85rem; color: #254b3d; border-bottom: 2px solid #006d5b; padding-bottom: .5rem; margin-bottom: .75rem; }
   .report-table-card .table-responsive { overflow: visible; }
+  /* El papel es más angosto que el breakpoint lg: se conservan las columnas de escritorio */
+  .report-page .h-100 { height: auto !important; }
+  .report-page .row > .col-xl-3 { flex: 0 0 auto; width: 25%; }
+  .report-page .row > :is(.col-lg-6, .col-xl-6) { flex: 0 0 auto; width: 50%; }
+  .report-page .row > .col-lg-4 { flex: 0 0 auto; width: 33.333%; }
+  .report-page .row > .col-lg-5 { flex: 0 0 auto; width: 41.667%; }
+  .report-page .row > .col-lg-7 { flex: 0 0 auto; width: 58.333%; }
+  .report-page .row > .col-lg-8 { flex: 0 0 auto; width: 66.667%; }
+  .report-page .admin-stat-value { font-size: 1.8rem; }
 }
 
 /* ── Actualización en tiempo real (HU13) ─────────────────────────────────────── */

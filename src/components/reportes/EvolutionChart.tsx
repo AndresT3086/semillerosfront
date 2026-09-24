@@ -40,7 +40,7 @@ export default function EvolutionChart({ puntos }: { puntos: ReporteEvolucion[] 
           {i % etiquetaCada === 0 && <text x={x(i)} y={ALTO - 12} textAnchor="middle" className="evolution-axis">{punto.anio}</text>}
         </g>)}
       </svg>
-      <p className="evolution-detail" role="status">{seleccionado
+      <p className={`evolution-detail${seleccionado ? "" : " no-print"}`} role="status">{seleccionado
         ? `${seleccionado.anio}: ${numero(seleccionado.semillerosActivos)} semilleros activos${seleccionado.proyectado ? ' (proyección)' : ` · ${numero(seleccionado.nuevos)} creados ese año`}`
         : 'Pasa el mouse o navega con el teclado sobre un punto para ver el detalle.'}</p>
       {proyeccion && <p className="small text-muted mb-0"><span className="evolution-legend-projection" aria-hidden="true" /> Proyección lineal para {proyeccion.anio} con base en la tendencia histórica.</p>}
