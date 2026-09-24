@@ -3,6 +3,8 @@ import { getSemilleros, getUnidades } from '../api/semillerosApi';
 import type { FiltroItem, PageResponse, SemilleroResumen } from '../types';
 import DetailsModal from '../components/DetailsModal';
 import Footer from '../components/Footer';
+import SolicitudesAccesoPanel from '../components/admin/SolicitudesAccesoPanel';
+import InvitarCoordinadorForm from '../components/admin/InvitarCoordinadorForm';
 import '../styles/admin.css';
 
 function Section({ title, icon, children, action }: { title: string; icon: string; children: ReactNode; action?: ReactNode }) {
@@ -12,7 +14,8 @@ function Pending({ children }: { children: ReactNode }) {
   return <div className="admin-pending"><i className="bi bi-hourglass-split" aria-hidden="true" /><div><strong>Próximamente</strong><p>{children}</p></div></div>;
 }
 
-export default function AdminDashboardPage({ correo, preview = false, onLogout, onReports }: { correo?: string; preview?: boolean; onLogout: () => void; onReports?: () => void }) {
+export default function AdminDashboardPage({ correo, token, preview = false, onLogout, onReports }: { correo?: string; token?: string; preview?: boolean; onLogout: () => void; onReports?: () => void }) {
+  const [pendientes, setPendientes] = useState<number | null>(null);
   const [unidades, setUnidades] = useState<FiltroItem[]>([]);
   const [catalogError, setCatalogError] = useState(false);
   const [total, setTotal] = useState<number | null>(null);
@@ -46,7 +49,7 @@ export default function AdminDashboardPage({ correo, preview = false, onLogout, 
   const stats = [
     { label: 'Usuarios totales', value: '—', note: 'Consulta de usuarios pendiente', icon: 'people' },
     { label: 'Semilleros activos', value: total?.toLocaleString('es-CO') ?? '—', note: 'Registrados en el catálogo público', icon: 'tree' },
-    { label: 'Solicitudes pendientes', value: '—', note: 'Consulta administrativa pendiente', icon: 'inbox' },
+    { label: 'Solicitudes pendientes', value: pendientes === null ? '—' : pendientes.toLocaleString('es-CO'), note: 'Accesos de coordinadores por revisar', icon: 'inbox' },
     { label: 'Unidades académicas', value: catalogError || total === null ? '—' : unidades.length.toLocaleString('es-CO'), note: 'Unidades del catálogo institucional', icon: 'buildings' },
   ];
   return <div className="admin-dashboard">
@@ -59,9 +62,8 @@ export default function AdminDashboardPage({ correo, preview = false, onLogout, 
       <div className="admin-page-heading"><div><p className="admin-eyebrow">GESTIÓN INSTITUCIONAL</p><h1>Panel de administración</h1><p className="text-muted mb-0">Una mirada general a los semilleros de investigación de la Universidad.</p></div><button className="btn admin-outline" onClick={() => setRefresh(value => value + 1)} disabled={loading}><i className="bi bi-arrow-clockwise me-2" />Actualizar datos</button></div>
       <div className="row g-3 mb-4">{stats.map(stat => <div className="col-12 col-sm-6 col-xl-3" key={stat.label}><div className="admin-stat"><span className="admin-stat-icon"><i className={`bi bi-${stat.icon}`} /></span><div className="admin-stat-value">{stat.value}</div><h2>{stat.label}</h2><p>{stat.note}</p></div></div>)}</div>
       {catalogError && <div className="alert alert-warning" role="alert">No se pudo cargar el resumen. Usa «Actualizar datos» para reintentar.</div>}
-      <Section title="Solicitudes recientes" icon="inbox" action={<span className="admin-badge">Gestión pendiente</span>}>
-        <div className="row g-3"><div className="col-md-6"><h3 className="admin-subtitle">Nuevos semilleros</h3><Pending>Aquí podrás revisar y resolver las solicitudes de creación de semilleros.</Pending></div><div className="col-md-6"><h3 className="admin-subtitle">Afiliaciones y cambios de rol</h3><Pending>Las solicitudes de afiliación y coordinación estarán disponibles en esta sección.</Pending></div></div>
-      </Section>
+      {token && <SolicitudesAccesoPanel token={token} onPendientes={setPendientes} />}
+      {token && <InvitarCoordinadorForm token={token} />}
       <Section title="Alertas de actualización" icon="clock-history"><Pending>La consulta de última actualización y el envío de recordatorios aún no están disponibles.</Pending><button className="btn admin-outline mt-3" disabled>Enviar recordatorios</button></Section>
       <Section title="Buscar usuario por cédula" icon="person-vcard"><p className="text-muted">La búsqueda, creación de usuarios y asignación de roles estarán disponibles en una próxima etapa.</p><fieldset disabled><div className="row g-3"><div className="col-md-8"><label className="form-label" htmlFor="admin-documento">Número de cédula</label><div className="input-group"><input id="admin-documento" className="form-control" placeholder="Ingrese el número de cédula" /><button className="btn admin-outline">Buscar</button></div></div><div className="col-md-4 d-flex align-items-end"><button className="btn admin-outline w-100"><i className="bi bi-person-plus me-2" />Nuevo usuario</button></div></div></fieldset></Section>
       <div className="row g-4"><div className="col-lg-8"><Section title="Semilleros" icon="tree" action={<span className="admin-badge">Solo consulta</span>}>

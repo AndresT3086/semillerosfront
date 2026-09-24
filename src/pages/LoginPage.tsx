@@ -1,13 +1,17 @@
 import { useEffect, useState } from 'react';
 import type { CaptchaResponse, LoginResponse } from '../types';
 import { getCaptcha, loginCoordinador } from '../api/semillerosApi';
+import SolicitudAccesoForm from '../components/SolicitudAccesoForm';
 
 interface LoginPageProps {
   onLoginSuccess: (response: LoginResponse) => void;
   onBack: () => void;
+  /** Mensaje informativo sobre el formulario (por ejemplo, cuenta recién activada). */
+  aviso?: string | null;
 }
 
-export default function LoginPage({ onLoginSuccess, onBack }: LoginPageProps) {
+export default function LoginPage({ onLoginSuccess, onBack, aviso }: LoginPageProps) {
+  const [modo, setModo] = useState<'ingresar' | 'solicitar'>('ingresar');
   const [correo, setCorreo] = useState('');
   const [password, setPassword] = useState('');
   const [captcha, setCaptcha] = useState<CaptchaResponse | null>(null);
@@ -82,7 +86,7 @@ export default function LoginPage({ onLoginSuccess, onBack }: LoginPageProps) {
       </div>
 
       {/* Login card */}
-      <div className="container" style={{ maxWidth: 460, flex: 1 }}>
+      <div className="container" style={{ maxWidth: modo === 'solicitar' ? 620 : 460, flex: 1 }}>
         <div className="card shadow-sm border-0" style={{ borderRadius: 12 }}>
           <div className="card-body p-4">
             <div className="text-center mb-4">
@@ -90,10 +94,17 @@ export default function LoginPage({ onLoginSuccess, onBack }: LoginPageProps) {
                 <i className="bi bi-shield-lock-fill text-white fs-4"></i>
               </div>
               <h4 className="fw-bold mb-0" style={{ color: 'var(--udea-verde-oscuro)' }}>
-                Acceso SIGSI
+                {modo === 'ingresar' ? 'Acceso SIGSI' : 'Solicitar acceso como coordinador'}
               </h4>
-              <p className="text-muted small mt-1 mb-0">Ingrese con su cuenta institucional</p>
+              <p className="text-muted small mt-1 mb-0">{modo === 'ingresar' ? 'Ingrese con su cuenta institucional' : 'Registro de coordinadores de semillero'}</p>
             </div>
+
+            {modo === 'solicitar' ? <SolicitudAccesoForm onVolver={() => setModo('ingresar')} /> : <>
+            {aviso && (
+              <div className="alert alert-success py-2 small mb-3" role="status">
+                <i className="bi bi-check-circle me-2"></i>{aviso}
+              </div>
+            )}
 
             {error && (
               <div className="alert alert-danger py-2 small mb-3">
@@ -187,8 +198,12 @@ export default function LoginPage({ onLoginSuccess, onBack }: LoginPageProps) {
             </form>
 
             <p className="text-center text-muted small mt-3 mb-0">
-              Solo usuarios registrados como coordinadores de semillero UdeA.
+              ¿Coordinas un semillero y aún no tienes cuenta?{' '}
+              <button type="button" className="btn btn-link btn-sm p-0 align-baseline" onClick={() => setModo('solicitar')}>
+                Solicitar acceso
+              </button>
             </p>
+            </>}
           </div>
         </div>
       </div>

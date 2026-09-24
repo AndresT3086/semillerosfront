@@ -20,9 +20,13 @@ vi.mock('./pages/AsistenciaPage', () => ({
 }));
 vi.mock('./pages/HomePage', () => ({ default: () => <h1>Portal</h1> }));
 vi.mock('./pages/CaracterizacionPage', () => ({ default: () => <h1>Caracterización</h1> }));
+vi.mock('./pages/EnlaceAccesoPage', () => ({
+  default: ({ accion, token, onIrAlLogin }: { accion: string; token: string; onIrAlLogin: (aviso?: string) => void }) =>
+    <div><h1>Enlace {accion} {token}</h1><button onClick={() => onIrAlLogin('Cuenta activada.')}>Continuar</button></div>,
+}));
 vi.mock('./pages/LoginPage', () => ({
-  default: ({ onLoginSuccess }: { onLoginSuccess: (response: LoginResponse) => void }) =>
-    <button onClick={() => onLoginSuccess({ token: token('ADMIN'), tipo: 'Bearer', correo: 'yiyi.lopez@udea.edu.co', idUsuario: 6 })}>Ingresar</button>,
+  default: ({ onLoginSuccess, aviso }: { onLoginSuccess: (response: LoginResponse) => void; aviso?: string | null }) =>
+    <><p>{aviso}</p><button onClick={() => onLoginSuccess({ token: token('ADMIN'), tipo: 'Bearer', correo: 'yiyi.lopez@udea.edu.co', idUsuario: 6 })}>Ingresar</button></>,
 }));
 
 function token(rol: string) {
@@ -89,6 +93,16 @@ describe('Navegación de reportes por rol (HU12, HU15)', () => {
     window.history.replaceState(null, '', '/?vista=reportes');
     render(<App />);
     expect(screen.queryByRole('heading', { name: /Reportes/ })).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Ingresar' })).toBeInTheDocument();
+  });
+
+  it('abre los enlaces del correo, quita el token de la URL y lleva al login con el aviso', () => {
+    window.history.replaceState(null, '', '/?accion=activar&token=abc123');
+    render(<App />);
+    expect(screen.getByRole('heading', { name: 'Enlace activar abc123' })).toBeInTheDocument();
+    expect(window.location.search).toBe('');
+    fireEvent.click(screen.getByRole('button', { name: 'Continuar' }));
+    expect(screen.getByText('Cuenta activada.')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Ingresar' })).toBeInTheDocument();
   });
 });

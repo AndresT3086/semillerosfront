@@ -9,8 +9,9 @@ import LoginPage from './pages/LoginPage';
 import CoordinadorHomePage from './pages/CoordinadorHomePage';
 import CaracterizacionPage from './pages/CaracterizacionPage';
 import AsistenciaPage from './pages/AsistenciaPage';
+import EnlaceAccesoPage, { type AccionEnlace } from './pages/EnlaceAccesoPage';
 
-type View = 'home' | 'login' | 'coordinador' | 'caracterizacion' | 'admin' | 'reportes' | 'asistencia';
+type View = 'home' | 'login' | 'coordinador' | 'caracterizacion' | 'admin' | 'reportes' | 'asistencia' | 'enlace';
 
 const AUTH_STORAGE_KEY = 'sigsi_auth';
 const SELECTED_SEMILLERO_KEY = 'sigsi_selected_semillero';
@@ -53,6 +54,14 @@ function writeVistaUrl(vista: 'reportes' | null) {
   window.history.replaceState(window.history.state, '', `${window.location.pathname}${query ? `?${query}` : ''}`);
 }
 
+// Enlaces enviados por correo: ?accion=verificar|activar&token=...
+function readEnlaceUrl(): { accion: AccionEnlace; token: string } | null {
+  const params = new URLSearchParams(window.location.search);
+  const accion = params.get('accion');
+  const token = params.get('token');
+  return (accion === 'verificar' || accion === 'activar') && token ? { accion, token } : null;
+}
+
 function readStoredSemilleroId() {
   const rawId = sessionStorage.getItem(SELECTED_SEMILLERO_KEY);
   if (!rawId) return null;
@@ -63,7 +72,10 @@ function readStoredSemilleroId() {
 export default function App() {
   const [auth, setAuth] = useState<LoginResponse | null>(() => readStoredAuth());
   const [selectedSemilleroId, setSelectedSemilleroId] = useState<number | null>(() => readStoredSemilleroId());
+  const [enlace, setEnlace] = useState(readEnlaceUrl);
+  const [avisoLogin, setAvisoLogin] = useState<string | null>(null);
   const [view, setView] = useState<View>(() => {
+    if (readEnlaceUrl()) return 'enlace';
     const storedAuth = readStoredAuth();
     const vista = readVistaUrl();
     // RN54: sin sesión activa, la URL de reportes lleva al inicio de sesión
@@ -126,6 +138,16 @@ export default function App() {
     setView('coordinador');
   }
 
+  // El token del correo no debe quedar en la barra de direcciones ni en el historial
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (!params.has('token')) return;
+    params.delete('token');
+    params.delete('accion');
+    const query = params.toString();
+    window.history.replaceState(window.history.state, '', window.location.pathname + (query ? '?' + query : ''));
+  }, []);
+
   useEffect(() => {
     if (!auth) return undefined;
 
@@ -156,7 +178,13 @@ export default function App() {
   }
 
   if (view === 'admin' && auth && isAdminToken(auth.token)) {
-    return <AdminDashboardPage onReports={openReports} correo={auth.correo} onLogout={() => handleLogout()} />;
+    return <AdminDashboardPage onReports={openReports} correo={auth.correo} token={auth.token} onLogout={() => handleLogout()} />;
+  }
+
+  if (view === 'enlace' && enlace) {
+    return <EnlaceAccesoPage accion={enlace.accion} token={enlace.token}
+      onIrAlLogin={aviso => { setEnlace(null); setAvisoLogin(aviso ?? null); setView('login'); }}
+      onVolver={() => { setEnlace(null); setView('home'); }} />;
   }
 
   if (view === 'login') {
@@ -167,7 +195,7 @@ export default function App() {
             <i className="bi bi-lock me-2"></i>Inicia sesión para consultar los reportes.
           </div>
         )}
-        <LoginPage onLoginSuccess={handleLoginSuccess} onBack={() => { setReportesTrasLogin(false); leaveReports('home'); }} />
+        <LoginPage aviso={avisoLogin} onLoginSuccess={handleLoginSuccess} onBack={() => { setReportesTrasLogin(false); setAvisoLogin(null); leaveReports('home'); }} />
       </>
     );
   }
