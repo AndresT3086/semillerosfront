@@ -2,6 +2,7 @@ import { useEffect, useId, useState } from 'react';
 import { getReportesDisponibles, getUnidades, getCatalogoReportes, getReporteSemillero, getCampus } from '../api/semillerosApi';
 import type { FiltroItem, PageResponse, SemilleroResumen } from '../types';
 import { EMPTY_FILTERS, REPORT_FILTERS_KEY, readReportFilters } from '../reports/filters';
+import MemberComposition from '../components/reportes/MemberComposition';
 import CampusDistribution from '../components/reportes/CampusDistribution';
 import UnitDistribution from '../components/reportes/UnitDistribution';
 import Footer from '../components/Footer';
@@ -128,6 +129,7 @@ export default function AdminReportsPage({ preview = false, onBack, onLogout }: 
         const next = { ...applied, idCampus, idSemillero: '' };
         setFilters(next); setApplied(next); setPagina(0);
       }} />
+      <MemberComposition filters={applied} />
       <section className="admin-card" aria-labelledby="report-detail"><div className="admin-section-heading"><h2 id="report-detail"><i className="bi bi-table" aria-hidden="true" />Detalle disponible por semillero</h2><span className="admin-badge">Catálogo activo</span></div><p className="text-muted small">Las actividades son las registradas como realizadas en cada semillero, sin filtro de período. No equivalen al total institucional ni al número de eventos de un mes.</p>
         {loading ? <p role="status">Cargando detalle…</p> : error ? <p>No hay detalle disponible en esta consulta.</p> : unsupported ? <p>Selecciona «Estado actual» y «Todas las unidades» para consultar los datos disponibles.</p> : !data?.contenido.length ? <p>No se encontraron semilleros activos para esta selección.</p> : <><div className="table-responsive"><table className="table report-table"><caption>Resultados para {unidades.find(item => String(item.id) === applied.idUnidad)?.nombre ?? 'todas las unidades'}</caption><thead><tr><th scope="col">Semillero</th><th scope="col">Unidad académica</th><th scope="col">Campus</th><th scope="col">Actividades realizadas</th></tr></thead><tbody>{data.contenido.map(item => <tr key={item.id}><th scope="row">{item.nombre}</th><td>{item.facultad}</td><td>{item.campus}</td><td>{item.totalActividadesCientificas ?? '—'}</td></tr>)}</tbody></table></div><nav className="admin-pagination" aria-label="Paginación de reportes"><button className="btn admin-outline" disabled={data.esPrimeraPagina} onClick={() => setPagina(value => value - 1)}>Anterior</button><span>Página {data.paginaActual + 1} de {data.totalPaginas}</span><button className="btn admin-outline" disabled={data.esUltimaPagina} onClick={() => setPagina(value => value + 1)}>Siguiente</button></nav></>}
       </section>

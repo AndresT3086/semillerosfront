@@ -37,3 +37,14 @@
 .campus-badge:hover, .campus-badge[aria-pressed="true"] { border-color: #006d5b; background: #e8f2eb; }
 .campus-badge:focus-visible { outline: 2px solid #006d5b; outline-offset: 2px; }
 .campus-swatch { width: 13px; height: 13px; flex-shrink: 0; border-radius: 50%; }
+.composition-donut { width: 100%; max-width: 300px; display: block; margin: auto; }
+.composition-notice { background: #f0f7f4; border: 1px dashed #c4d5ca; border-radius: 8px; padding: .8rem; color: #52665a; font-size: .85rem; }
+.composition-list { list-style: none; padding: 0; margin: 0; }
+.composition-item { position: relative; padding: .8rem 0; border-radius: 4px; }
+.composition-item:focus-visible { outline: 2px solid #006d5b; outline-offset: 3px; }
+.composition-label { display: flex; justify-content: space-between; flex-wrap: wrap; gap: .5rem; font-size: .85rem; margin-bottom: .5rem; color: #254b3d; }
+.composition-label > span { display: flex; align-items: center; gap: .5rem; }
+.composition-progress { height: 14px; border-radius: 6px; background: #e9efeb; overflow: hidden; }
+.composition-progress > span { display: block; height: 100%; border-radius: 6px; }
+.composition-tooltip { display: none; position: absolute; bottom: 100%; left: 0; background: #064d40; color: white; border-radius: 6px; padding: .55rem .7rem; font-size: .8rem; z-index: 4; }
+.composition-item:hover .composition-tooltip, .composition-item:focus-visible .composition-tooltip { display: block; }

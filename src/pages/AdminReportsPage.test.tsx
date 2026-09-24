@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { beforeEach, expect, it, vi } from 'vitest';
 import { getReportesDisponibles, getUnidades, getCatalogoReportes, getReporteSemillero, getDistribucionDisponible, getCampus, getDistribucionCampus } from '../api/semillerosApi';
 import AdminReportsPage from './AdminReportsPage';
@@ -17,8 +17,8 @@ beforeEach(() => {
 it('usa el total del backend, deja los demás KPI sin inventar y actualiza al consultar de nuevo', async () => {
   render(<AdminReportsPage onBack={() => {}} onLogout={() => {}} />);
   expect(await screen.findByText('23')).toBeInTheDocument();
-  expect(screen.getAllByText('—')).toHaveLength(3);
-  expect(screen.getAllByRole('tooltip', { hidden: true })).toHaveLength(4);
+  expect(within(screen.getByRole('region', { name: 'Indicadores clave' })).getAllByText('—')).toHaveLength(3);
+  expect(within(screen.getByRole('region', { name: 'Indicadores clave' })).getAllByRole('tooltip', { hidden: true })).toHaveLength(4);
   vi.mocked(getReportesDisponibles).mockResolvedValue({ ...page, totalElementos: 24 });
   fireEvent.click(screen.getByRole('button', { name: 'Actualizar datos' }));
   expect(await screen.findByText('24')).toBeInTheDocument();
