@@ -8,8 +8,9 @@ import { isAdminToken } from './auth/role';
 import LoginPage from './pages/LoginPage';
 import CoordinadorHomePage from './pages/CoordinadorHomePage';
 import CaracterizacionPage from './pages/CaracterizacionPage';
+import AsistenciaPage from './pages/AsistenciaPage';
 
-type View = 'home' | 'login' | 'coordinador' | 'caracterizacion' | 'admin' | 'reportes' | 'estadisticas';
+type View = 'home' | 'login' | 'coordinador' | 'caracterizacion' | 'admin' | 'reportes' | 'estadisticas' | 'asistencia';
 
 const AUTH_STORAGE_KEY = 'sigsi_auth';
 const SELECTED_SEMILLERO_KEY = 'sigsi_selected_semillero';
@@ -73,6 +74,7 @@ export default function App() {
     return readStoredSemilleroId() != null ? 'caracterizacion' : 'coordinador';
   });
   const [sessionMessage, setSessionMessage] = useState<string | null>(null);
+  const [semilleroAsistencia, setSemilleroAsistencia] = useState<{ id: number; nombre: string } | null>(null);
   const [reportesTrasLogin, setReportesTrasLogin] = useState(() => readVistaUrl() === 'reportes' && !readStoredAuth());
 
   function openReports() {
@@ -183,6 +185,20 @@ export default function App() {
         onLogout={handleLogout}
         onOpenSemillero={handleOpenSemillero}
         onReports={openReports}
+        onOpenAsistencia={(id, nombre) => { setSemilleroAsistencia({ id, nombre }); setView('asistencia'); }}
+      />
+    );
+  }
+
+  if (view === 'asistencia' && auth && semilleroAsistencia) {
+    return (
+      <AsistenciaPage
+        token={auth.token}
+        correo={auth.correo}
+        idSemillero={semilleroAsistencia.id}
+        nombreSemillero={semilleroAsistencia.nombre}
+        onBack={() => { setSemilleroAsistencia(null); setView('coordinador'); }}
+        onLogout={handleLogout}
       />
     );
   }

@@ -11,7 +11,12 @@ vi.mock('./pages/AdminDashboardPage', () => ({
   default: ({ onReports }: { onReports: () => void }) => <div><h1>Panel admin</h1><button onClick={onReports}>Reportes</button></div>,
 }));
 vi.mock('./pages/CoordinadorHomePage', () => ({
-  default: ({ onReports }: { onReports: () => void }) => <div><h1>Panel coordinador</h1><button onClick={onReports}>Ver estadísticas</button></div>,
+  default: ({ onReports, onOpenAsistencia }: { onReports: () => void; onOpenAsistencia: (id: number, nombre: string) => void }) =>
+    <div><h1>Panel coordinador</h1><button onClick={onReports}>Ver estadísticas</button><button onClick={() => onOpenAsistencia(10, 'Semillero IA')}>Asistencia</button></div>,
+}));
+vi.mock('./pages/AsistenciaPage', () => ({
+  default: ({ idSemillero, nombreSemillero, onBack }: { idSemillero: number; nombreSemillero: string; onBack: () => void }) =>
+    <div><h1>Asistencia {idSemillero} {nombreSemillero}</h1><button onClick={onBack}>Volver</button></div>,
 }));
 vi.mock('./pages/HomePage', () => ({
   default: ({ onEstadisticas }: { onEstadisticas: () => void }) => <div><h1>Portal</h1><button onClick={onEstadisticas}>Estadísticas</button></div>,
@@ -65,6 +70,15 @@ describe('Navegación de reportes por rol (HU12, HU15)', () => {
     view.unmount();
     render(<App />);
     expect(screen.getByRole('heading', { name: 'Reportes COORDINADOR' })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Volver' }));
+    expect(screen.getByRole('heading', { name: 'Panel coordinador' })).toBeInTheDocument();
+  });
+
+  it('el coordinador abre la asistencia de un semillero y vuelve a su panel', () => {
+    iniciarSesion('COORDINADOR');
+    render(<App />);
+    fireEvent.click(screen.getByRole('button', { name: 'Asistencia' }));
+    expect(screen.getByRole('heading', { name: 'Asistencia 10 Semillero IA' })).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'Volver' }));
     expect(screen.getByRole('heading', { name: 'Panel coordinador' })).toBeInTheDocument();
   });

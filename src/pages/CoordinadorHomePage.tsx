@@ -14,6 +14,7 @@ interface Props {
   onLogout: () => void;
   onOpenSemillero: (idSemillero: number) => void;
   onReports?: () => void;
+  onOpenAsistencia?: (idSemillero: number, nombre: string) => void;
 }
 
 function estadoLabel(estado?: string | null) {
@@ -67,6 +68,7 @@ export default function CoordinadorHomePage({
   onLogout,
   onOpenSemillero,
   onReports,
+  onOpenAsistencia,
 }: Props) {
   const [activeTab, setActiveTab] = useState<'semilleros' | 'solicitudes'>('semilleros');
   const [semilleros, setSemilleros] = useState<SemilleroCoordinador[]>([]);
@@ -290,6 +292,11 @@ export default function CoordinadorHomePage({
                       <button className="btn-select" onClick={() => onOpenSemillero(semillero.id)}>
                         <i className="bi bi-arrow-right-circle me-1"></i>{accionPrincipal(semillero)}
                       </button>
+                      {onOpenAsistencia && semillero.estado === 'ACTIVO' && (
+                        <button className="btn-select mt-2" onClick={() => onOpenAsistencia(semillero.id, semillero.nombre || semillero.codigo)}>
+                          <i className="bi bi-clipboard-check me-1"></i>Actividades y asistencia
+                        </button>
+                      )}
                     </div>
                   </div>
                 );
