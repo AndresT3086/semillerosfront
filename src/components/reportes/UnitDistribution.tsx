@@ -25,8 +25,8 @@ export function DistributionBars({ rows, metric, selectedId, onSelect }: {
   </ul>{available.every(row => row[metric] === 0) && <p className="text-muted small mt-3">No hay {metric} registrados en el catálogo para estas unidades.</p>}</>;
 }
 
-export default function UnitDistribution({ revision, selectedId, unsupported, selectedSemillero, onSelect }: {
-  revision: number; selectedId: string; unsupported: boolean; selectedSemillero: boolean; onSelect: (id: string) => void;
+export default function UnitDistribution({ revision, selectedId, idCampus = '', unsupported, selectedSemillero, onSelect }: {
+  revision: number; selectedId: string; idCampus?: string; unsupported: boolean; selectedSemillero: boolean; onSelect: (id: string) => void;
 }) {
   const [rows, setRows] = useState<DistribucionUnidad[]>([]);
   const [loading, setLoading] = useState(true);
@@ -40,12 +40,12 @@ export default function UnitDistribution({ revision, selectedId, unsupported, se
     setLoading(true);
     setError(false);
     setRows([]);
-    getDistribucionDisponible(controller.signal)
+    getDistribucionDisponible(controller.signal, idCampus)
       .then(result => { if (!controller.signal.aborted) setRows(result); })
       .catch(() => { if (!controller.signal.aborted) { setError(true); controller.abort(); } })
       .finally(() => { if (!disposed) setLoading(false); });
     return () => { disposed = true; controller.abort(); };
-  }, [revision, retry, blocked]);
+  }, [revision, retry, blocked, idCampus]);
   const visibleRows = selectedId ? rows.filter(row => String(row.id) === selectedId) : rows;
   return <section className="admin-card" aria-labelledby="distribution-title">
     <div className="admin-section-heading"><h2 id="distribution-title"><i className="bi bi-bar-chart" aria-hidden="true" />Distribución por unidad académica</h2><span className="admin-badge">Catálogo público · Conteo parcial</span></div>

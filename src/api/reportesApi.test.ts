@@ -46,3 +46,17 @@ it('obtiene conteos por IDs oficiales sin convertir datos ausentes en estudiante
   ]);
   expect(fetchMock).toHaveBeenCalledTimes(3);
 });
+
+it('combina campus y unidad en los conteos geográficos y en la tabla', async () => {
+  const { getDistribucionCampus } = await import('./semillerosApi');
+  const fetchMock = vi.fn().mockImplementation(async (url: string) => url.includes('/filtros/campus')
+    ? response([{ id: 9, nombre: 'Oriente' }]) : response({ ...page([]), totalElementos: 4 }));
+  vi.stubGlobal('fetch', fetchMock);
+  expect(await getDistribucionCampus('2')).toEqual([{ id: 9, nombre: 'Oriente', semilleros: 4 }]);
+  await getReportesDisponibles('2', 0, '9');
+  for (const call of fetchMock.mock.calls.slice(1)) {
+    const params = new URL(call[0]).searchParams;
+    expect(params.get('idCampus')).toBe('9');
+    expect(params.get('idUnidad')).toBe('2');
+  }
+});

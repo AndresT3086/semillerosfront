@@ -368,20 +368,22 @@ export async function finalizarCaracterizacion(
 export async function getReportesDisponibles(
   idUnidad = '',
   pagina = 0,
+  idCampus = '',
 ): Promise<PageResponse<SemilleroResumen>> {
   const params = new URLSearchParams({ pagina: String(pagina), tamano: '10' });
   if (idUnidad) params.set('idUnidad', idUnidad);
+  if (idCampus) params.set('idCampus', idCampus);
   return apiFetch<PageResponse<SemilleroResumen>>(`/api/v1/semilleros?${params}`, {
     cache: 'no-store',
   });
 }
 
 // Catálogo completo, no solo la primera página, para seleccionar un semillero.
-export async function getCatalogoReportes(idUnidad = ''): Promise<SemilleroResumen[]> {
-  const first = await getReportesDisponibles(idUnidad, 0);
+export async function getCatalogoReportes(idUnidad = '', idCampus = ''): Promise<SemilleroResumen[]> {
+  const first = await getReportesDisponibles(idUnidad, 0, idCampus);
   const items = [...first.contenido];
   for (let pagina = 1; pagina < first.totalPaginas; pagina++) {
-    const next = await getReportesDisponibles(idUnidad, pagina);
+    const next = await getReportesDisponibles(idUnidad, pagina, idCampus);
     items.push(...next.contenido);
   }
   return [...new Map(items.map(item => [item.id, item])).values()];
@@ -404,7 +406,7 @@ export interface DistribucionUnidad {
 
 // Conteos SQL del catálogo público por ID real de unidad. No se deduce el tipo
 // desde el nombre ni se suman membresías como si fueran estudiantes únicos.
-export async function getDistribucionDisponible(signal?: AbortSignal): Promise<DistribucionUnidad[]> {
+export async function getDistribucionDisponible(signal?: AbortSignal, idCampus = ''): Promise<DistribucionUnidad[]> {
   const unidades = await apiFetch<FiltroItem[]>('/api/v1/filtros/unidades-academicas', { signal });
   const result: DistribucionUnidad[] = new Array(unidades.length);
   let next = 0;
@@ -414,9 +416,29 @@ export async function getDistribucionDisponible(signal?: AbortSignal): Promise<D
       const index = next++;
       const unidad = unidades[index];
       const params = new URLSearchParams({ idUnidad: String(unidad.id), pagina: '0', tamano: '1' });
+      if (idCampus) params.set('idCampus', idCampus);
       const page = await apiFetch<PageResponse<SemilleroResumen>>(`/api/v1/semilleros?${params}`, { signal, cache: 'no-store' });
       if (!Number.isInteger(page.totalElementos) || page.totalElementos < 0) throw new Error('Conteo de unidad inválido');
       result[index] = { id: unidad.id, nombre: unidad.nombre, semilleros: page.totalElementos, estudiantes: null };
+    }
+  }));
+  return result.sort((a, b) => b.semilleros - a.semilleros || a.nombre.localeCompare(b.nombre, 'es'));
+}
+
+export interface DistribucionCampus { id: number; nombre: string; semilleros: number }
+export async function getDistribucionCampus(idUnidad = '', signal?: AbortSignal): Promise<DistribucionCampus[]> {
+  const campus = await apiFetch<FiltroItem[]>('/api/v1/filtros/campus', { signal });
+  const result: DistribucionCampus[] = new Array(campus.length);
+  let next = 0;
+  await Promise.all(Array.from({ length: Math.min(4, campus.length) }, async () => {
+    while (next < campus.length) {
+      const index = next++;
+      const sede = campus[index];
+      const params = new URLSearchParams({ idCampus: String(sede.id), pagina: '0', tamano: '1' });
+      if (idUnidad) params.set('idUnidad', idUnidad);
+      const page = await apiFetch<PageResponse<SemilleroResumen>>(`/api/v1/semilleros?${params}`, { signal, cache: 'no-store' });
+      if (!Number.isInteger(page.totalElementos) || page.totalElementos < 0) throw new Error('Conteo de campus inválido');
+      result[index] = { id: sede.id, nombre: sede.nombre, semilleros: page.totalElementos };
     }
   }));
   return result.sort((a, b) => b.semilleros - a.semilleros || a.nombre.localeCompare(b.nombre, 'es'));

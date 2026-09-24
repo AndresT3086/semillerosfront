@@ -1,5 +1,5 @@
 export const REPORT_FILTERS_KEY = 'sigsi_report_filters';
-export const EMPTY_FILTERS = { periodo: '', tipoUnidad: '', idUnidad: '', idSemillero: '' };
+export const EMPTY_FILTERS = { periodo: '', tipoUnidad: '', idUnidad: '', idSemillero: '', idCampus: '' };
 export type ReportFilters = typeof EMPTY_FILTERS;
 export function readReportFilters(): ReportFilters {
   try {
@@ -12,6 +12,7 @@ export function readReportFilters(): ReportFilters {
     if (!['', 'FACULTAD', 'ESCUELA', 'INSTITUTO', 'CORPORACION'].includes(result.tipoUnidad)) result.tipoUnidad = '';
     if (!/^\d+$/.test(result.idUnidad)) result.idUnidad = '';
     if (!/^\d+$/.test(result.idSemillero)) result.idSemillero = '';
+    if (!/^\d+$/.test(result.idCampus)) result.idCampus = '';
     return result;
   } catch { return { ...EMPTY_FILTERS }; }
 }

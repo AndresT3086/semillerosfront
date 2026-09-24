@@ -25,3 +25,15 @@
 .distribution-empty > i { display: block; font-size: 2rem; color: #006d5b; margin-bottom: .8rem; }
 .distribution-empty p { font-size: .85rem; margin-top: .7rem; }
 @media(max-width: 420px) { .distribution-row { grid-template-columns: minmax(100px, 1fr) minmax(45px, .65fr) 2rem; gap: .35rem; } }
+.campus-donut { display: block; width: 100%; max-width: 350px; margin: auto; overflow: visible; }
+.campus-segment { cursor: pointer; pointer-events: stroke; }
+.campus-segment:hover, .campus-segment:focus-visible { stroke-width: 65px; filter: brightness(.9); outline: none; }
+.campus-count { font-size: 15px; font-weight: 800; fill: #173b2b; stroke: white; stroke-width: 3px; paint-order: stroke; pointer-events: none; }
+.campus-total { fill: #006d5b; font-size: 36px; font-weight: 750; }
+.campus-caption { fill: #52665a; font-size: 14px; }
+.campus-badges { list-style: none; padding: 0; display: grid; gap: .6rem; }
+.campus-badge { display: flex; width: 100%; align-items: center; gap: .65rem; padding: .7rem .9rem; border-radius: 10px; border: 1px solid #d1e0d6; background: #f5f9f6; color: #254b3d; text-align: left; }
+.campus-badge strong { margin-left: auto; border-radius: 12px; background: white; padding: .2rem .65rem; }
+.campus-badge:hover, .campus-badge[aria-pressed="true"] { border-color: #006d5b; background: #e8f2eb; }
+.campus-badge:focus-visible { outline: 2px solid #006d5b; outline-offset: 2px; }
+.campus-swatch { width: 13px; height: 13px; flex-shrink: 0; border-radius: 50%; }

@@ -1,7 +1,8 @@
 import { useEffect, useId, useState } from 'react';
-import { getReportesDisponibles, getUnidades, getCatalogoReportes, getReporteSemillero } from '../api/semillerosApi';
+import { getReportesDisponibles, getUnidades, getCatalogoReportes, getReporteSemillero, getCampus } from '../api/semillerosApi';
 import type { FiltroItem, PageResponse, SemilleroResumen } from '../types';
 import { EMPTY_FILTERS, REPORT_FILTERS_KEY, readReportFilters } from '../reports/filters';
+import CampusDistribution from '../components/reportes/CampusDistribution';
 import UnitDistribution from '../components/reportes/UnitDistribution';
 import Footer from '../components/Footer';
 import '../styles/admin.css';
@@ -24,6 +25,7 @@ export default function AdminReportsPage({ preview = false, onBack, onLogout }: 
   preview?: boolean; onBack: () => void; onLogout: () => void;
 }) {
   const [data, setData] = useState<PageResponse<SemilleroResumen> | null>(null);
+  const [campus, setCampus] = useState<FiltroItem[]>([]);
   const [unidades, setUnidades] = useState<FiltroItem[]>([]);
   const [filters, setFilters] = useState(readReportFilters);
   const [applied, setApplied] = useState(readReportFilters);
@@ -50,7 +52,7 @@ export default function AdminReportsPage({ preview = false, onBack, onLogout }: 
     if (unsupported) { setLoading(false); return; }
     const request = applied.idSemillero
       ? getReporteSemillero(applied.idSemillero)
-      : getReportesDisponibles(applied.idUnidad, pagina);
+      : getReportesDisponibles(applied.idUnidad, pagina, applied.idCampus);
     request
       .then(result => { if (active) { setData(result); setUpdatedAt(new Date()); } })
       .catch(() => { if (active) setError('No pudimos consultar los indicadores. Revisa la conexión y vuelve a intentarlo.'); })
@@ -61,7 +63,7 @@ export default function AdminReportsPage({ preview = false, onBack, onLogout }: 
   useEffect(() => {
     let active = true;
     setFilterError(false);
-    getUnidades().then(result => { if (active) setUnidades(result); })
+    Promise.all([getUnidades(), getCampus()]).then(([units, sites]) => { if (active) { setUnidades(units); setCampus(sites); } })
       .catch(() => { if (active) setFilterError(true); });
     return () => { active = false; };
   }, [revision]);
@@ -72,12 +74,12 @@ export default function AdminReportsPage({ preview = false, onBack, onLogout }: 
     setCatalogLoading(true);
     setCatalogError(false);
     setCatalogo([]);
-    getCatalogoReportes(filters.idUnidad)
+    getCatalogoReportes(filters.idUnidad, filters.idCampus)
       .then(items => { if (active) setCatalogo(items); })
       .catch(() => { if (active) setCatalogError(true); })
       .finally(() => { if (active) setCatalogLoading(false); });
     return () => { active = false; };
-  }, [filters.idUnidad, revision]);
+  }, [filters.idUnidad, filters.idCampus, revision]);
 
   useEffect(() => {
     try { sessionStorage.setItem(REPORT_FILTERS_KEY, JSON.stringify(applied)); } catch { /* Storage unavailable: page remains usable. */ }
@@ -96,6 +98,7 @@ export default function AdminReportsPage({ preview = false, onBack, onLogout }: 
           <div className="col-md-4"><label htmlFor="report-period" className="form-label">Período académico</label><select id="report-period" className="form-select" value={filters.periodo} onChange={event => setFilters(value => ({ ...value, periodo: event.target.value }))}><option value="">Estado actual (sin período)</option>{years.map(year => <optgroup key={year} label={String(year)}><option value={year}>{year} · Año completo</option><option value={`${year}-1`}>{year}-1 · Primer semestre</option><option value={`${year}-2`}>{year}-2 · Segundo semestre</option></optgroup>)}</select></div>
           <div className="col-md-4"><label htmlFor="report-type" className="form-label">Tipo de unidad</label><select id="report-type" className="form-select" value={filters.tipoUnidad} onChange={event => setFilters(value => ({ ...value, tipoUnidad: event.target.value, idUnidad: '', idSemillero: '' }))}><option value="">Todas las unidades</option><option value="FACULTAD">Facultades</option><option value="ESCUELA">Escuelas</option><option value="INSTITUTO">Institutos</option><option value="CORPORACION">Corporaciones</option></select></div>
           <div className="col-md-4"><label htmlFor="report-unit" className="form-label">Unidad académica</label><select id="report-unit" className="form-select" value={filters.idUnidad} onChange={event => setFilters(value => ({ ...value, idUnidad: event.target.value, idSemillero: '' }))} disabled={filterError || Boolean(filters.tipoUnidad)}><option value="">Todas las unidades académicas</option>{unidades.map(item => <option key={item.id} value={item.id}>{item.nombre}</option>)}</select></div>
+          <div className="col-md-4"><label htmlFor="report-campus" className="form-label">Campus o seccional</label><select id="report-campus" className="form-select" value={filters.idCampus} disabled={filterError} onChange={event => setFilters(value => ({ ...value, idCampus: event.target.value, idSemillero: '' }))}><option value="">Todos los campus</option>{campus.map(item => <option key={item.id} value={item.id}>{item.nombre}</option>)}</select></div>
           <div className="col-md-8"><label htmlFor="report-semillero" className="form-label">Semillero</label><select id="report-semillero" className="form-select" value={filters.idSemillero} disabled={catalogLoading || catalogError} onChange={event => setFilters(value => ({ ...value, idSemillero: event.target.value }))}><option value="">Todos los semilleros del catálogo público</option>{filters.idSemillero && !catalogo.some(item => String(item.id) === filters.idSemillero) && <option value={filters.idSemillero}>Semillero seleccionado #{filters.idSemillero}</option>}{catalogo.map(item => <option key={item.id} value={item.id}>{item.nombre}</option>)}</select><small className="text-muted">{catalogLoading ? 'Cargando catálogo…' : 'Semilleros activos con caracterización completa.'}</small></div>
           <div className="col-md-4 d-flex gap-2"><button className="btn btn-udea mt-0" disabled={loading}>Aplicar filtros</button><button type="button" className="btn admin-outline" onClick={() => { setFilters({ ...EMPTY_FILTERS }); setApplied({ ...EMPTY_FILTERS }); setPagina(0); setRevision(value => value + 1); }}>Limpiar</button></div>
         </form>
@@ -105,7 +108,7 @@ export default function AdminReportsPage({ preview = false, onBack, onLogout }: 
 
       </section>
       <div className="report-status" role="status">{loading ? 'Consultando la información más reciente…' : updatedAt ? `Última consulta: ${updatedAt.toLocaleString('es-CO')}` : 'Sin consulta disponible'}</div>
-      <p className="small">Filtros aplicados: {applied.periodo || 'Estado actual'} · {applied.tipoUnidad || 'Todos los tipos'} · {applied.idUnidad ? unidades.find(item => String(item.id) === applied.idUnidad)?.nombre ?? `Unidad #${applied.idUnidad}` : 'Todas las unidades'} · {applied.idSemillero ? `Semillero #${applied.idSemillero}` : 'Todos los semilleros'}</p>
+      <p className="small">Filtros aplicados: {applied.periodo || 'Estado actual'} · {applied.tipoUnidad || 'Todos los tipos'} · {applied.idUnidad ? unidades.find(item => String(item.id) === applied.idUnidad)?.nombre ?? `Unidad #${applied.idUnidad}` : 'Todas las unidades'} · {campus.find(item => String(item.id) === applied.idCampus)?.nombre ?? (applied.idCampus ? `Campus #${applied.idCampus}` : 'Todos los campus')} · {applied.idSemillero ? `Semillero #${applied.idSemillero}` : 'Todos los semilleros'}</p>
       {unsupported && <div className="alert alert-warning" role="status">Consulta no disponible para {applied.periodo ? `el período ${applied.periodo}` : 'el tipo de unidad seleccionado'}. Falta habilitar estos filtros en el servicio de reportes. No se han usado datos del estado actual como resultados de esta selección.</div>}
       {error && <div className="alert alert-danger" role="alert">{error}<button className="btn btn-link" onClick={() => setRevision(value => value + 1)}>Reintentar</button></div>}
       <section className="row g-3 mb-4" aria-label="Indicadores clave" aria-busy={loading}>
@@ -115,11 +118,15 @@ export default function AdminReportsPage({ preview = false, onBack, onLogout }: 
         <div className="col-sm-6 col-xl-3"><KpiCard label="Tasa de participación" icon="pie-chart" value={null} note="Miembros activos / registrados × 100." loading={false} /></div>
       </section>
       <p className="report-availability"><i className="bi bi-info-circle me-2" aria-hidden="true" />«—» indica información no disponible, no un valor de cero. Las comparaciones estarán disponibles cuando existan datos del período anterior.</p>
-      <UnitDistribution revision={revision} selectedId={applied.idUnidad} unsupported={unsupported} selectedSemillero={Boolean(applied.idSemillero)} onSelect={idUnidad => {
+      <UnitDistribution idCampus={applied.idCampus} revision={revision} selectedId={applied.idUnidad} unsupported={unsupported} selectedSemillero={Boolean(applied.idSemillero)} onSelect={idUnidad => {
         const next = { ...applied, idUnidad, idSemillero: '' };
         setFilters(next);
         setApplied(next);
         setPagina(0);
+      }} />
+      <CampusDistribution idUnidad={applied.idUnidad} selectedId={applied.idCampus} revision={revision} blocked={unsupported || Boolean(applied.idSemillero)} onSelect={idCampus => {
+        const next = { ...applied, idCampus, idSemillero: '' };
+        setFilters(next); setApplied(next); setPagina(0);
       }} />
       <section className="admin-card" aria-labelledby="report-detail"><div className="admin-section-heading"><h2 id="report-detail"><i className="bi bi-table" aria-hidden="true" />Detalle disponible por semillero</h2><span className="admin-badge">Catálogo activo</span></div><p className="text-muted small">Las actividades son las registradas como realizadas en cada semillero, sin filtro de período. No equivalen al total institucional ni al número de eventos de un mes.</p>
         {loading ? <p role="status">Cargando detalle…</p> : error ? <p>No hay detalle disponible en esta consulta.</p> : unsupported ? <p>Selecciona «Estado actual» y «Todas las unidades» para consultar los datos disponibles.</p> : !data?.contenido.length ? <p>No se encontraron semilleros activos para esta selección.</p> : <><div className="table-responsive"><table className="table report-table"><caption>Resultados para {unidades.find(item => String(item.id) === applied.idUnidad)?.nombre ?? 'todas las unidades'}</caption><thead><tr><th scope="col">Semillero</th><th scope="col">Unidad académica</th><th scope="col">Campus</th><th scope="col">Actividades realizadas</th></tr></thead><tbody>{data.contenido.map(item => <tr key={item.id}><th scope="row">{item.nombre}</th><td>{item.facultad}</td><td>{item.campus}</td><td>{item.totalActividadesCientificas ?? '—'}</td></tr>)}</tbody></table></div><nav className="admin-pagination" aria-label="Paginación de reportes"><button className="btn admin-outline" disabled={data.esPrimeraPagina} onClick={() => setPagina(value => value - 1)}>Anterior</button><span>Página {data.paginaActual + 1} de {data.totalPaginas}</span><button className="btn admin-outline" disabled={data.esUltimaPagina} onClick={() => setPagina(value => value + 1)}>Siguiente</button></nav></>}
