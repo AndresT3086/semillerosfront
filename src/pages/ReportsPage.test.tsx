@@ -195,3 +195,19 @@ describe('ReportsPage - coordinador (HU12)', () => {
     expect(screen.queryByRole('button', { name: 'Exportar Excel' })).not.toBeInTheDocument();
   });
 });
+
+it('retira el aviso de descarga tras seis segundos y permite cerrarlo manualmente', async () => {
+  vi.mocked(exportarReporte).mockResolvedValue({ nombre: 'reporte.xlsx', archivo: new Blob(['x']) });
+  renderAdmin();
+  await screen.findByRole('rowheader', { name: /Robótica/ });
+  vi.useFakeTimers();
+  try {
+    await act(async () => { fireEvent.click(screen.getByRole('button', { name: 'Exportar Excel' })); });
+    expect(screen.getByText('Se descargó reporte.xlsx.')).toBeInTheDocument();
+    act(() => vi.advanceTimersByTime(6000));
+    expect(screen.queryByText('Se descargó reporte.xlsx.')).not.toBeInTheDocument();
+    await act(async () => { fireEvent.click(screen.getByRole('button', { name: 'Exportar Excel' })); });
+    fireEvent.click(screen.getByRole('button', { name: 'Cerrar notificación de descarga' }));
+    expect(screen.queryByText('Se descargó reporte.xlsx.')).not.toBeInTheDocument();
+  } finally { vi.useRealTimers(); }
+});

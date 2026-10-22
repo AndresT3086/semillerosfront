@@ -84,6 +84,7 @@ export default function App() {
     if (isAdminToken(storedAuth.token)) return 'admin';
     return readStoredSemilleroId() != null ? 'caracterizacion' : 'coordinador';
   });
+  const [avisoInactividad, setAvisoInactividad] = useState(false);
   const [sessionMessage, setSessionMessage] = useState<string | null>(null);
   const [semilleroAsistencia, setSemilleroAsistencia] = useState<{ id: number; nombre: string } | null>(null);
   const [reportesTrasLogin, setReportesTrasLogin] = useState(() => readVistaUrl() === 'reportes' && !readStoredAuth());
@@ -117,12 +118,16 @@ export default function App() {
   }
 
   function handleLogout(message?: string) {
+    if (!message && !window.confirm('¿Quieres cerrar sesión? Los cambios sin guardar se perderán.')) return;
+    setAvisoInactividad(false);
     clearReportFilters();
     writeVistaUrl(null);
     clearStoredSession();
     setAuth(null);
     setSelectedSemilleroId(null);
-    setSessionMessage(message ?? null);
+    setSessionMessage(message ?? 'Sesión cerrada correctamente.');
+    setSemilleroAsistencia(null);
+    setReportesTrasLogin(false);
     setView('home');
   }
 
@@ -152,9 +157,13 @@ export default function App() {
     if (!auth) return undefined;
 
     let timeoutId: number;
+    let warningId: number;
     const refreshActivity = () => {
       sessionStorage.setItem(LAST_ACTIVITY_KEY, Date.now().toString());
       window.clearTimeout(timeoutId);
+      window.clearTimeout(warningId);
+      setAvisoInactividad(false);
+      warningId = window.setTimeout(() => setAvisoInactividad(true), INACTIVITY_LIMIT_MS - 2 * 60 * 1000);
       timeoutId = window.setTimeout(() => {
         handleLogout('Sesión cerrada por inactividad.');
       }, INACTIVITY_LIMIT_MS);
@@ -166,10 +175,12 @@ export default function App() {
 
     return () => {
       window.clearTimeout(timeoutId);
+      window.clearTimeout(warningId);
       events.forEach(eventName => window.removeEventListener(eventName, refreshActivity));
     };
   }, [auth]);
 
+  function renderView() {
   // HU12: el mismo tablero con el alcance del rol del token; el backend valida el rol (RN42).
   if (view === 'reportes' && auth) {
     const esAdmin = isAdminToken(auth.token);
@@ -205,7 +216,7 @@ export default function App() {
       <CoordinadorHomePage
         token={auth.token}
         correoCoordinador={auth.correo}
-        onLogout={handleLogout}
+        onLogout={() => handleLogout()}
         onOpenSemillero={handleOpenSemillero}
         onReports={openReports}
         onOpenAsistencia={(id, nombre) => { setSemilleroAsistencia({ id, nombre }); setView('asistencia'); }}
@@ -221,7 +232,7 @@ export default function App() {
         idSemillero={semilleroAsistencia.id}
         nombreSemillero={semilleroAsistencia.nombre}
         onBack={() => { setSemilleroAsistencia(null); setView('coordinador'); }}
-        onLogout={handleLogout}
+        onLogout={() => handleLogout()}
       />
     );
   }
@@ -233,7 +244,7 @@ export default function App() {
         correoCoordinador={auth.correo}
         semilleroId={selectedSemilleroId}
         onBack={handleBackToCoordinador}
-        onLogout={handleLogout}
+        onLogout={() => handleLogout()}
       />
     );
   }
@@ -248,4 +259,12 @@ export default function App() {
       <HomePage onAccesoSigsi={() => setView('login')} />
     </>
   );
+  }
+  return <>
+    {auth && avisoInactividad && <div className="alert alert-warning m-3" role="alert">
+      Tu sesión se cerrará en 2 minutos por inactividad. Guarda los cambios o continúa trabajando.
+      <button type="button" className="btn btn-outline-dark ms-3">Continuar sesión</button>
+    </div>}
+    {renderView()}
+  </>;
 }

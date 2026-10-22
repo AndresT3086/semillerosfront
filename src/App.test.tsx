@@ -1,5 +1,5 @@
-import { fireEvent, render, screen } from '@testing-library/react';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { act, fireEvent, render, screen } from '@testing-library/react';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import App from './App';
 import type { LoginResponse } from './types';
 
@@ -11,8 +11,8 @@ vi.mock('./pages/AdminDashboardPage', () => ({
   default: ({ onReports }: { onReports: () => void }) => <div><h1>Panel admin</h1><button onClick={onReports}>Reportes</button></div>,
 }));
 vi.mock('./pages/CoordinadorHomePage', () => ({
-  default: ({ onReports, onOpenAsistencia }: { onReports: () => void; onOpenAsistencia: (id: number, nombre: string) => void }) =>
-    <div><h1>Panel coordinador</h1><button onClick={onReports}>Ver estadísticas</button><button onClick={() => onOpenAsistencia(10, 'Semillero IA')}>Asistencia</button></div>,
+  default: ({ onLogout, onReports, onOpenAsistencia }: { onLogout: () => void; onReports: () => void; onOpenAsistencia: (id: number, nombre: string) => void }) =>
+    <div><h1>Panel coordinador</h1><button onClick={onLogout}>Cerrar sesión</button><button onClick={onReports}>Ver estadísticas</button><button onClick={() => onOpenAsistencia(10, 'Semillero IA')}>Asistencia</button></div>,
 }));
 vi.mock('./pages/AsistenciaPage', () => ({
   default: ({ idSemillero, nombreSemillero, onBack }: { idSemillero: number; nombreSemillero: string; onBack: () => void }) =>
@@ -105,4 +105,30 @@ describe('Navegación de reportes por rol (HU12, HU15)', () => {
     expect(screen.getByText('Cuenta activada.')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Ingresar' })).toBeInTheDocument();
   });
+});
+
+afterEach(() => { vi.useRealTimers(); vi.restoreAllMocks(); });
+it('cancelar conserva la sesión y confirmar cierra sin renderizar el evento del clic', () => {
+  iniciarSesion('COORDINADOR');
+  const confirmar = vi.spyOn(window, 'confirm').mockReturnValue(false);
+  render(<App />);
+  fireEvent.click(screen.getByRole('button', { name: 'Cerrar sesión' }));
+  expect(screen.getByText('Panel coordinador')).toBeInTheDocument();
+  confirmar.mockReturnValue(true);
+  fireEvent.click(screen.getByRole('button', { name: 'Cerrar sesión' }));
+  expect(screen.getByText('Portal')).toBeInTheDocument();
+  expect(screen.getByText('Sesión cerrada correctamente.')).toBeInTheDocument();
+  expect(sessionStorage.getItem('sigsi_auth')).toBeNull();
+});
+it('avisa antes del vencimiento, permite continuar y luego cierra por inactividad', () => {
+  vi.useFakeTimers();
+  iniciarSesion('COORDINADOR');
+  render(<App />);
+  act(() => vi.advanceTimersByTime(28 * 60 * 1000));
+  expect(screen.getByRole('alert')).toHaveTextContent('2 minutos');
+  fireEvent.click(screen.getByRole('button', { name: 'Continuar sesión' }));
+  expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+  act(() => vi.advanceTimersByTime(30 * 60 * 1000));
+  expect(screen.getByText('Portal')).toBeInTheDocument();
+  expect(screen.getByText('Sesión cerrada por inactividad.')).toBeInTheDocument();
 });

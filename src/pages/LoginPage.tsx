@@ -14,6 +14,7 @@ export default function LoginPage({ onLoginSuccess, onBack, aviso }: LoginPagePr
   const [modo, setModo] = useState<'ingresar' | 'solicitar'>('ingresar');
   const [correo, setCorreo] = useState('');
   const [password, setPassword] = useState('');
+  const [mostrarPassword, setMostrarPassword] = useState(false);
   const [captcha, setCaptcha] = useState<CaptchaResponse | null>(null);
   const [respuesta, setRespuesta] = useState('');
   const [loading, setLoading] = useState(false);
@@ -142,7 +143,9 @@ export default function LoginPage({ onLoginSuccess, onBack, aviso }: LoginPagePr
                     <i className="bi bi-lock" style={{ color: 'var(--udea-verde-principal)' }}></i>
                   </span>
                   <input
-                    type="password"
+                    type={mostrarPassword ? "text" : "password"}
+                    autoComplete="current-password"
+                    aria-label="Contraseña"
                     className="form-control"
                     placeholder="Contraseña"
                     value={password}
@@ -150,6 +153,9 @@ export default function LoginPage({ onLoginSuccess, onBack, aviso }: LoginPagePr
                     required
                     style={{ borderColor: 'var(--udea-gris)' }}
                   />
+                  <button type="button" className="btn btn-outline-secondary" aria-label={mostrarPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'} aria-pressed={mostrarPassword} onClick={() => setMostrarPassword(value => !value)}>
+                    <i className={mostrarPassword ? 'bi bi-eye-slash' : 'bi bi-eye'} aria-hidden="true" />
+                  </button>
                 </div>
               </div>
 

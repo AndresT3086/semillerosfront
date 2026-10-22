@@ -120,6 +120,12 @@ export default function ReportsPage({ alcance, token, correo, onBack, onLogout }
     return () => window.clearTimeout(temporizador);
   }, [avisoActualizado, revision]);
 
+  useEffect(() => {
+    if (!exportResultado?.ok) return;
+    const timer = window.setTimeout(() => setExportResultado(null), 6000);
+    return () => window.clearTimeout(timer);
+  }, [exportResultado]);
+
   // HU11: la fecha de impresión se fija justo antes de abrir el diálogo (también con Ctrl+P).
   useEffect(() => {
     const antesDeImprimir = () => {
@@ -185,7 +191,7 @@ export default function ReportsPage({ alcance, token, correo, onBack, onLogout }
         </div>
       </div>
       {exportando && <p className="report-status no-print" role="status">Generando el archivo {exportando.toUpperCase()} con los filtros aplicados. Puedes seguir consultando el reporte.</p>}
-      {exportResultado && <div className={`alert ${exportResultado.ok ? 'alert-success' : 'alert-danger'} no-print`} role={exportResultado.ok ? 'status' : 'alert'}>{exportResultado.texto}</div>}
+      {exportResultado && <div className={`alert ${exportResultado.ok ? 'alert-success' : 'alert-danger'} no-print`} role={exportResultado.ok ? 'status' : 'alert'}>{exportResultado.texto}<button type="button" className="btn-close ms-3" aria-label="Cerrar notificación de descarga" onClick={() => setExportResultado(null)} /></div>}
       <div className="print-only report-print-heading">
         <strong>Reporte de semilleros de investigación · Universidad de Antioquia</strong>
         <span>Impreso el {(impresoEn ?? new Date()).toLocaleString('es-CO')}</span>
